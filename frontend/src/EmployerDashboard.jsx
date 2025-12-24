@@ -408,9 +408,24 @@ export default function EmployerDashboard() {
                         )}
                     </nav>
 
-                    <div className="p-4 border-t">
-                        <div className="text-xs text-gray-400 mb-2">Clinic ID</div>
-                        <div className="text-xs text-gray-600 font-mono truncate">{clinicId}</div>
+                    {/* Bottom section with Clinic ID and Logout */}
+                    <div className="mt-auto">
+                        <div className="p-4 border-t">
+                            <div className="text-xs text-gray-400 mb-2">Clinic ID</div>
+                            <div className="text-xs text-gray-600 font-mono truncate">{clinicId}</div>
+                        </div>
+                        <div className="p-4 pt-0">
+                            <button
+                                onClick={() => {
+                                    localStorage.removeItem('hure_auth_token');
+                                    localStorage.removeItem('hure_clinic_id');
+                                    window.location.href = '/';
+                                }}
+                                className="text-sm text-red-600 hover:text-red-800 hover:underline"
+                            >
+                                Logout
+                            </button>
+                        </div>
                     </div>
                 </aside>
 
