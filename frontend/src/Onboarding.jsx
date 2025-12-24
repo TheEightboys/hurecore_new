@@ -223,7 +223,13 @@ export default function Onboarding() {
                 {/* Header */}
                 <div className="text-center mb-6">
                     <a href="/" className="text-emerald-700 font-bold text-2xl">HURE</a>
-                    <div className="text-slate-500 text-sm">Staff & Patient Management</div>
+                    <div className="text-slate-500 text-sm">Multi-Tenant Staff Management</div>
+                    <a href="/" className="inline-flex items-center gap-1 mt-3 text-sm text-emerald-600 hover:text-emerald-700 hover:underline transition">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        Back to Home
+                    </a>
                 </div>
 
                 {/* Progress Bar */}

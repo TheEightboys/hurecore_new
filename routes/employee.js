@@ -40,21 +40,41 @@ async function requireStaff(req, res, next) {
  */
 router.get('/profile', requireStaff, async (req, res) => {
     try {
+        // First get staff with clinic
         const { data: staff, error } = await supabaseAdmin
             .from('staff')
             .select(`
                 *,
-                clinic:clinics(id, name, town, country),
-                location:clinic_locations(name)
+                clinic:clinics(id, name, town, country)
             `)
             .eq('id', req.user.staffId)
             .single();
 
         if (error || !staff) {
+            console.error('Staff query error:', error);
             return res.status(404).json({ error: 'Staff profile not found' });
         }
 
-        res.json(staff);
+        // Get location separately if location_id exists
+        let locationName = null;
+        if (staff.location_id) {
+            const { data: location } = await supabaseAdmin
+                .from('clinic_locations')
+                .select('name')
+                .eq('id', staff.location_id)
+                .single();
+            locationName = location?.name;
+        }
+
+        // Add clinic and location names for display
+        res.json({
+            staff: {
+                ...staff,
+                clinic_name: staff.clinic?.name,
+                location_name: locationName,
+                role: staff.job_role
+            }
+        });
     } catch (err) {
         console.error('Get staff profile error:', err);
         res.status(500).json({ error: 'Server error' });
@@ -96,28 +116,105 @@ router.patch('/profile', requireStaff, async (req, res) => {
 
 /**
  * GET /api/employee/schedule
- * Get staff member's assigned shifts
+ * Get staff member's assigned shifts AND open shifts matching their role
  */
 router.get('/schedule', requireStaff, async (req, res) => {
     try {
         const { from, to } = req.query;
 
-        let query = supabaseAdmin
+        // First get the staff member's details (job_role and clinic_id)
+        const { data: staffData, error: staffError } = await supabaseAdmin
+            .from('staff')
+            .select('job_role, clinic_id')
+            .eq('id', req.user.staffId)
+            .single();
+
+        if (staffError || !staffData) {
+            console.error('Staff lookup error:', staffError);
+            return res.status(404).json({ error: 'Staff profile not found' });
+        }
+
+        console.log('[DEBUG] Staff schedule lookup:', {
+            staffId: req.user.staffId,
+            clinicId: staffData.clinic_id,
+            jobRole: staffData.job_role
+        });
+
+        // Query 1: Get shifts directly assigned to this staff member
+        let assignedQuery = supabaseAdmin
             .from('shifts')
             .select('*')
-            .contains('assigned_staff', [req.user.staffId])
-            .order('shift_date', { ascending: true });
+            .eq('staff_id', req.user.staffId)
+            .order('date', { ascending: true });
 
-        if (from) query = query.gte('shift_date', from);
-        if (to) query = query.lte('shift_date', to);
+        if (from) assignedQuery = assignedQuery.gte('date', from);
+        if (to) assignedQuery = assignedQuery.lte('date', to);
 
-        const { data, error } = await query;
+        // Query 2: Get open shifts that match the staff member's role and clinic
+        let openQuery = supabaseAdmin
+            .from('shifts')
+            .select('*')
+            .eq('clinic_id', staffData.clinic_id)
+            .eq('status', 'open')
+            .eq('required_role', staffData.job_role)
+            .order('date', { ascending: true });
 
-        if (error) {
+        if (from) openQuery = openQuery.gte('date', from);
+        if (to) openQuery = openQuery.lte('date', to);
+
+        // Execute both queries in parallel
+        const [assignedResult, openResult] = await Promise.all([
+            assignedQuery,
+            openQuery
+        ]);
+
+        if (assignedResult.error) {
+            console.error('Assigned shifts query error:', assignedResult.error);
             return res.status(500).json({ error: 'Failed to fetch schedule' });
         }
 
-        res.json(data || []);
+        if (openResult.error) {
+            console.error('Open shifts query error:', openResult.error);
+            return res.status(500).json({ error: 'Failed to fetch schedule' });
+        }
+
+
+        // Combine and deduplicate shifts (in case of overlap)
+        const allShifts = [...(assignedResult.data || []), ...(openResult.data || [])];
+
+        console.log('[DEBUG] Shift query results:', {
+            assignedCount: assignedResult.data?.length || 0,
+            openCount: openResult.data?.length || 0,
+            assignedShifts: assignedResult.data,
+            openShifts: openResult.data
+        });
+        const uniqueShifts = allShifts.reduce((acc, shift) => {
+            if (!acc.find(s => s.id === shift.id)) {
+                acc.push(shift);
+            }
+            return acc;
+        }, []);
+
+        // Sort by date and time
+        uniqueShifts.sort((a, b) => {
+            const dateCompare = a.date.localeCompare(b.date);
+            if (dateCompare !== 0) return dateCompare;
+            return a.start_time.localeCompare(b.start_time);
+        });
+
+        // Map to expected format
+        const shifts = uniqueShifts.map(s => ({
+            id: s.id,
+            date: s.date,
+            start_time: s.start_time,
+            end_time: s.end_time,
+            role: s.required_role || 'Shift',
+            status: s.status || 'assigned',
+            isOpenShift: s.status === 'open',
+            decline_reason: null
+        }));
+
+        res.json({ shifts });
     } catch (err) {
         console.error('Get staff schedule error:', err);
         res.status(500).json({ error: 'Server error' });
@@ -185,10 +282,10 @@ router.get('/attendance', requireStaff, async (req, res) => {
             .from('attendances')
             .select('*')
             .eq('staff_id', req.user.staffId)
-            .order('attendance_date', { ascending: false });
+            .order('date', { ascending: false });
 
-        if (from) query = query.gte('attendance_date', from);
-        if (to) query = query.lte('attendance_date', to);
+        if (from) query = query.gte('date', from);
+        if (to) query = query.lte('date', to);
 
         const { data, error } = await query;
 
@@ -196,7 +293,16 @@ router.get('/attendance', requireStaff, async (req, res) => {
             return res.status(500).json({ error: 'Failed to fetch attendance' });
         }
 
-        res.json(data || []);
+        // Map to expected format
+        const attendance = (data || []).map(a => ({
+            id: a.id,
+            date: a.date,
+            clock_in: a.clock_in,
+            clock_out: a.clock_out,
+            status: a.status
+        }));
+
+        res.json({ attendance });
     } catch (err) {
         console.error('Get attendance error:', err);
         res.status(500).json({ error: 'Server error' });
@@ -212,15 +318,38 @@ router.post('/attendance/clock-in', requireStaff, async (req, res) => {
         const today = new Date().toISOString().split('T')[0];
         const now = new Date();
 
+        console.log('[DEBUG] Clock-in attempt:', {
+            staffId: req.user.staffId,
+            clinicId: req.user.clinicId,
+            today
+        });
+
+        // Get clinic_id from staff table if not in token
+        let clinicId = req.user.clinicId;
+        if (!clinicId) {
+            const { data: staffData, error: staffError } = await supabaseAdmin
+                .from('staff')
+                .select('clinic_id')
+                .eq('id', req.user.staffId)
+                .single();
+
+            if (staffError || !staffData) {
+                console.error('Failed to get staff clinic:', staffError);
+                return res.status(500).json({ error: 'Failed to get staff details' });
+            }
+            clinicId = staffData.clinic_id;
+            console.log('[DEBUG] Got clinicId from staff table:', clinicId);
+        }
+
         // Check if already clocked in today
         const { data: existing } = await supabaseAdmin
             .from('attendances')
             .select('*')
             .eq('staff_id', req.user.staffId)
-            .eq('clinic_id', req.user.clinicId)
-            .eq('attendance_date', today)
+            .eq('clinic_id', clinicId)
+            .eq('date', today)
             .is('clock_out', null)
-            .single();
+            .maybeSingle();
 
         if (existing) {
             return res.status(400).json({ error: 'Already clocked in today' });
@@ -230,19 +359,21 @@ router.post('/attendance/clock-in', requireStaff, async (req, res) => {
             .from('attendances')
             .insert({
                 staff_id: req.user.staffId,
-                clinic_id: req.user.clinicId,
-                attendance_date: today,
-                clock_in: now.toTimeString().slice(0, 8),
+                clinic_id: clinicId,
+                date: today,
+                clock_in: now.toISOString(),
                 status: 'present'
             })
             .select()
             .single();
 
         if (error) {
+            console.error('[DEBUG] Clock-in insert error:', error);
             return res.status(500).json({ error: 'Failed to clock in' });
         }
 
-        res.json(data);
+        console.log('[DEBUG] Clock-in successful:', data);
+        res.json({ success: true, attendance: data });
     } catch (err) {
         console.error('Clock in error:', err);
         res.status(500).json({ error: 'Server error' });
@@ -263,7 +394,7 @@ router.post('/attendance/clock-out', requireStaff, async (req, res) => {
             .from('attendances')
             .select('*')
             .eq('staff_id', req.user.staffId)
-            .eq('attendance_date', today)
+            .eq('date', today)
             .is('clock_out', null)
             .single();
 
@@ -271,21 +402,59 @@ router.post('/attendance/clock-out', requireStaff, async (req, res) => {
             return res.status(400).json({ error: 'No active clock-in found' });
         }
 
+        // Calculate hours worked
+        const clockInTime = new Date(attendance.clock_in);
+        const clockOutTime = now;
+        const millisecondsWorked = clockOutTime - clockInTime;
+        const hoursWorked = millisecondsWorked / (1000 * 60 * 60); // Convert to hours
+
+        // Define required hours (8 hours standard workday)
+        const requiredHours = 8;
+        const halfDayThreshold = requiredHours * 0.5; // 4 hours
+
+        // Determine attendance status
+        let status = 'absent';
+        let overtimeHours = 0;
+
+        if (hoursWorked >= requiredHours) {
+            status = 'present';
+            overtimeHours = hoursWorked - requiredHours;
+        } else if (hoursWorked >= halfDayThreshold) {
+            status = 'half_day';
+        } else {
+            status = 'absent';
+        }
+
         const { data, error } = await supabaseAdmin
             .from('attendances')
             .update({
-                clock_out: now.toTimeString().slice(0, 8),
-                updated_at: new Date().toISOString()
+                clock_out: now.toISOString(),
+                hours_worked: parseFloat(hoursWorked.toFixed(2)),
+                status: status,
+                updated_at: now.toISOString()
             })
             .eq('id', attendance.id)
             .select()
             .single();
 
         if (error) {
+            console.error('[DEBUG] Clock-out error:', error);
             return res.status(500).json({ error: 'Failed to clock out' });
         }
 
-        res.json(data);
+        console.log('[DEBUG] Clock-out successful:', {
+            hoursWorked: hoursWorked.toFixed(2),
+            status,
+            overtimeHours: overtimeHours.toFixed(2)
+        });
+
+        res.json({
+            success: true,
+            attendance: data,
+            hoursWorked: parseFloat(hoursWorked.toFixed(2)),
+            status,
+            overtimeHours: parseFloat(overtimeHours.toFixed(2))
+        });
     } catch (err) {
         console.error('Clock out error:', err);
         res.status(500).json({ error: 'Server error' });
@@ -308,7 +477,7 @@ router.get('/leave', requireStaff, async (req, res) => {
             return res.status(500).json({ error: 'Failed to fetch leave requests' });
         }
 
-        res.json(data || []);
+        res.json({ leaves: data || [] });
     } catch (err) {
         console.error('Get leave requests error:', err);
         res.status(500).json({ error: 'Server error' });
@@ -321,31 +490,59 @@ router.get('/leave', requireStaff, async (req, res) => {
  */
 router.post('/leave', requireStaff, async (req, res) => {
     try {
-        const { leaveType, startDate, endDate, reason } = req.body;
+        // Accept both snake_case and camelCase field names
+        const leaveType = req.body.leaveType || req.body.leave_type;
+        const startDate = req.body.startDate || req.body.start_date;
+        const endDate = req.body.endDate || req.body.end_date;
+        const reason = req.body.reason || null;
+
+        console.log('[DEBUG] Leave request:', { leaveType, startDate, endDate, reason });
 
         if (!leaveType || !startDate || !endDate) {
             return res.status(400).json({ error: 'Leave type, start date, and end date are required' });
         }
 
+        // Get clinic_id from staff if not in token
+        let clinicId = req.user.clinicId;
+        if (!clinicId) {
+            const { data: staffData } = await supabaseAdmin
+                .from('staff')
+                .select('clinic_id')
+                .eq('id', req.user.staffId)
+                .single();
+
+            if (staffData) {
+                clinicId = staffData.clinic_id;
+            }
+        }
+
+        // Calculate days count
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const daysCount = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+
         const { data, error } = await supabaseAdmin
             .from('leave_requests')
             .insert({
                 staff_id: req.user.staffId,
-                clinic_id: req.user.clinicId,
+                clinic_id: clinicId,
                 leave_type: leaveType,
-                start_date: startDate,
-                end_date: endDate,
-                reason: reason || null,
+                from_date: startDate,
+                to_date: endDate,
+                days_count: daysCount,
+                reason: reason,
                 status: 'pending'
             })
             .select()
             .single();
 
         if (error) {
+            console.error('[DEBUG] Leave insert error:', error);
             return res.status(500).json({ error: 'Failed to submit leave request' });
         }
 
-        res.json(data);
+        console.log('[DEBUG] Leave request created:', data);
+        res.json({ success: true, leave: data });
     } catch (err) {
         console.error('Submit leave request error:', err);
         res.status(500).json({ error: 'Server error' });
@@ -383,7 +580,7 @@ router.get('/documents', requireStaff, async (req, res) => {
             };
         });
 
-        res.json(docs);
+        res.json({ documents: docs });
     } catch (err) {
         console.error('Get documents error:', err);
         res.status(500).json({ error: 'Server error' });

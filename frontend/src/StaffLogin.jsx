@@ -1,9 +1,7 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
 import { staffLogin, setStaffToken } from './employeeApi';
 
 export default function StaffLogin() {
-    const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -17,7 +15,7 @@ export default function StaffLogin() {
         try {
             const result = await staffLogin(email, password);
             setStaffToken(result.token);
-            navigate('/employee');
+            window.location.href = '/employee';
         } catch (err) {
             setError(err.message || 'Login failed');
             setLoading(false);
@@ -90,9 +88,9 @@ export default function StaffLogin() {
                 </div>
 
                 <div className="mt-4 text-center">
-                    <Link to="/" className="text-sm text-blue-600 hover:underline">
+                    <a href="/" className="text-sm text-blue-600 hover:underline">
                         Back to Home
-                    </Link>
+                    </a>
                 </div>
             </div>
         </div>

@@ -29,6 +29,7 @@ const shiftsRoutes = require('./routes/shifts');
 const attendanceRoutes = require('./routes/attendance');
 const leaveRoutes = require('./routes/leave');
 const locationsRoutes = require('./routes/locations');
+const settingsRoutes = require('./routes/clinic-settings');
 
 // Employee Portal routes
 const employeeRoutes = require('./routes/employee');
@@ -54,6 +55,7 @@ app.use('/api/clinics', shiftsRoutes);     // /api/clinics/:clinicId/shifts
 app.use('/api/clinics', attendanceRoutes); // /api/clinics/:clinicId/attendance
 app.use('/api/clinics', leaveRoutes);      // /api/clinics/:clinicId/leave
 app.use('/api/clinics', locationsRoutes);  // /api/clinics/:clinicId/locations
+app.use('/api/clinics', settingsRoutes);   // /api/clinics/:clinicId/settings
 
 // Staff auth & invite routes (public - must be separate router to avoid route conflicts)
 app.use('/api/staff', staffAuthRoutes);    // /api/staff/login, /api/staff/accept-invite, /api/staff/verify-invite
@@ -102,6 +104,7 @@ if (process.env.NODE_ENV !== 'production') {
         console.log('   GET           /api/clinics/:clinicId/attendance/export');
         console.log('   GET/POST      /api/clinics/:clinicId/leave');
         console.log('   GET/POST      /api/clinics/:clinicId/locations');
+        console.log('   GET/PATCH     /api/clinics/:clinicId/settings');
     });
 }
 

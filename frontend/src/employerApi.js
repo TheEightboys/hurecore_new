@@ -244,5 +244,22 @@ export const locationsAPI = {
     },
 };
 
+// ============================================
+// SETTINGS API
+// ============================================
+
+export const settingsAPI = {
+    get: (clinicId) => {
+        return fetchAPI(`/clinics/${clinicId}/settings`);
+    },
+
+    update: (clinicId, data) => {
+        return fetchAPI(`/clinics/${clinicId}/settings`, {
+            method: 'PATCH',
+            body: JSON.stringify(data),
+        });
+    },
+};
+
 // Export helper functions
 export { getToken, getClinicId };

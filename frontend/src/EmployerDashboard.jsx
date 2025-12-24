@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { staffAPI, shiftsAPI, attendanceAPI, leaveAPI, locationsAPI, getClinicId } from './employerApi';
+import { staffAPI, shiftsAPI, attendanceAPI, leaveAPI, locationsAPI, settingsAPI, getClinicId } from './employerApi';
 
 /**
  * HURE Core - Employer Dashboard
@@ -97,6 +97,25 @@ export default function EmployerDashboard() {
         requiredRole: 'Nurse', staffId: null
     });
 
+    // Settings state
+    const [clinicSettings, setClinicSettings] = useState({
+        clinic: { name: '', town: '', phone: '', contact_name: '' },
+        attendance: {
+            required_daily_hours: 8,
+            unpaid_break_minutes: 30,
+            late_threshold_minutes: 15,
+            overtime_multiplier: 1.5
+        },
+        leave: {
+            annual_leave_days: 21,
+            sick_leave_days: 10,
+            maternity_leave_days: 90,
+            paternity_leave_days: 14,
+            leave_carryover_allowed: false
+        }
+    });
+    const [settingsSaving, setSettingsSaving] = useState(false);
+
     // Permission check helper
     const hasPermission = useCallback((permission) => {
         return DEFAULT_PERMISSIONS[currentUserRole]?.[permission] ?? false;
@@ -109,17 +128,30 @@ export default function EmployerDashboard() {
         const fetchData = async () => {
             setLoading(true);
             try {
-                const [staffRes, shiftsRes, leaveRes, locationsRes] = await Promise.all([
+                const [staffRes, shiftsRes, leaveRes, locationsRes, attendanceRes, settingsRes] = await Promise.all([
                     staffAPI.list(clinicId),
                     shiftsAPI.list(clinicId),
                     leaveAPI.list(clinicId),
-                    locationsAPI.list(clinicId)
+                    locationsAPI.list(clinicId),
+                    attendanceAPI.list(clinicId),
+                    settingsAPI.get(clinicId).catch(() => null) // Don't fail if settings table doesn't exist yet
                 ]);
 
                 setStaff(staffRes.data || []);
                 setShifts(shiftsRes.data || []);
                 setLeaveRequests(leaveRes.data || []);
                 setLocations(locationsRes.data || []);
+                setAttendances(attendanceRes.data || []);
+
+                // Load clinic settings if available
+                if (settingsRes) {
+                    setClinicSettings({
+                        clinic: settingsRes.clinic || {},
+                        attendance: settingsRes.settings?.attendance || clinicSettings.attendance,
+                        leave: settingsRes.settings?.leave || clinicSettings.leave
+                    });
+                    setClinicInfo(settingsRes.clinic || clinicInfo);
+                }
             } catch (err) {
                 console.error('Fetch error:', err);
                 setError(err.message);
@@ -130,6 +162,44 @@ export default function EmployerDashboard() {
 
         fetchData();
     }, [clinicId]);
+
+    // Fetch settings when settings view is opened
+    useEffect(() => {
+        if (view !== 'settings' || !clinicId) return;
+
+        const fetchSettings = async () => {
+            try {
+                const result = await settingsAPI.get(clinicId);
+                setClinicSettings({
+                    clinic: result.clinic || {},
+                    attendance: result.settings?.attendance || clinicSettings.attendance,
+                    leave: result.settings?.leave || clinicSettings.leave
+                });
+                setClinicInfo(result.clinic || clinicInfo);
+            } catch (err) {
+                console.error('Failed to load settings:', err);
+            }
+        };
+
+        fetchSettings();
+    }, [view, clinicId]);
+
+    // Save settings handler
+    const handleSaveSettings = async () => {
+        setSettingsSaving(true);
+        try {
+            await settingsAPI.update(clinicId, {
+                clinic: clinicSettings.clinic,
+                attendance: clinicSettings.attendance,
+                leave: clinicSettings.leave
+            });
+            alert('Settings saved successfully!');
+        } catch (err) {
+            alert('Failed to save settings: ' + err.message);
+        } finally {
+            setSettingsSaving(false);
+        }
+    };
 
     // Staff handlers
     const handleCreateStaff = async () => {
@@ -358,11 +428,11 @@ export default function EmployerDashboard() {
                         </div>
                         <div className="flex items-center gap-4">
                             <div className="text-right">
-                                <div className="text-sm font-medium">{clinicInfo.name}</div>
-                                <div className="text-xs text-gray-500">{clinicInfo.town}</div>
+                                <div className="text-sm font-medium">{clinicSettings.clinic.name || clinicInfo.name}</div>
+                                <div className="text-xs text-gray-500">{clinicSettings.clinic.town || clinicInfo.town}</div>
                             </div>
-                            <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                                U
+                            <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-medium">
+                                {(clinicSettings.clinic.name || clinicInfo.name || 'C').charAt(0).toUpperCase()}
                             </div>
                         </div>
                     </header>
@@ -495,14 +565,20 @@ export default function EmployerDashboard() {
                                                 </td>
                                                 <td className="py-3 pr-4">
                                                     <span className={`px-2 py-0.5 rounded-full text-xs ${s.employment_status === 'active'
-                                                            ? 'bg-green-100 text-green-700'
-                                                            : 'bg-gray-100 text-gray-600'
+                                                        ? 'bg-green-100 text-green-700'
+                                                        : 'bg-gray-100 text-gray-600'
                                                         }`}>
                                                         {s.employment_status}
                                                     </span>
                                                 </td>
                                                 <td className="py-3 pr-4">
                                                     <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => { setSelectedStaff(s); setShowKycModal(true); }}
+                                                            className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                                                        >
+                                                            KYC
+                                                        </button>
                                                         {hasPermission('invite_staff') && s.invite_status !== 'active' && (
                                                             <button
                                                                 onClick={() => handleSendInvite(s.id)}
@@ -511,12 +587,6 @@ export default function EmployerDashboard() {
                                                                 Invite
                                                             </button>
                                                         )}
-                                                        <button
-                                                            onClick={() => { setSelectedStaff(s); setShowKycModal(true); }}
-                                                            className="text-xs text-gray-600 hover:underline"
-                                                        >
-                                                            KYC
-                                                        </button>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -599,8 +669,8 @@ export default function EmployerDashboard() {
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <span className={`px-3 py-1 rounded-full text-xs ${l.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                                                    l.status === 'approved' ? 'bg-green-100 text-green-700' :
-                                                        'bg-red-100 text-red-700'
+                                                l.status === 'approved' ? 'bg-green-100 text-green-700' :
+                                                    'bg-red-100 text-red-700'
                                                 }`}>
                                                 {l.status}
                                             </span>
@@ -638,43 +708,370 @@ export default function EmployerDashboard() {
                     {view === 'attendance' && !loading && (
                         <div className="bg-white p-4 rounded-lg shadow-sm border">
                             <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-lg font-semibold">Attendance Records</h2>
+                                <div>
+                                    <h2 className="text-lg font-semibold">Attendance Records</h2>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Status: Present (≥8 hrs) | Half Day (≥4 hrs) | Absent (&lt;4 hrs)
+                                    </p>
+                                </div>
                                 {hasPermission('export_attendance') && (
-                                    <button className="px-4 py-2 bg-white border rounded-md text-sm hover:bg-gray-50">
+                                    <button
+                                        onClick={() => window.open(`/api/clinics/${clinicId}/attendance/export`, '_blank')}
+                                        className="px-4 py-2 bg-white border rounded-md text-sm hover:bg-gray-50"
+                                    >
                                         Export CSV
                                     </button>
                                 )}
                             </div>
 
-                            <div className="text-center py-8 text-gray-500">
-                                Attendance tracking coming soon. Staff can clock in/out from the employee portal.
-                            </div>
+                            {attendances.length > 0 ? (
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full text-sm">
+                                        <thead>
+                                            <tr className="text-left text-xs text-gray-500 border-b">
+                                                <th className="py-3 pr-4">Staff</th>
+                                                <th className="py-3 pr-4">Date</th>
+                                                <th className="py-3 pr-4">Clock In</th>
+                                                <th className="py-3 pr-4">Clock Out</th>
+                                                <th className="py-3 pr-4">Hours Worked</th>
+                                                <th className="py-3 pr-4">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {attendances.map(a => {
+                                                // Format timestamps to readable time
+                                                const formatTime = (timestamp) => {
+                                                    if (!timestamp) return '-';
+                                                    const date = new Date(timestamp);
+                                                    return date.toLocaleTimeString('en-US', {
+                                                        hour: '2-digit',
+                                                        minute: '2-digit',
+                                                        hour12: true
+                                                    });
+                                                };
+
+                                                // Calculate overtime
+                                                const hoursWorked = a.hours_worked || 0;
+                                                const overtime = hoursWorked > 8 ? hoursWorked - 8 : 0;
+
+                                                // Status badge colors
+                                                const getStatusBadge = (status) => {
+                                                    switch (status) {
+                                                        case 'present':
+                                                            return 'bg-green-100 text-green-700';
+                                                        case 'half_day':
+                                                            return 'bg-yellow-100 text-yellow-700';
+                                                        case 'absent':
+                                                            return 'bg-red-100 text-red-700';
+                                                        default:
+                                                            return 'bg-blue-100 text-blue-700';
+                                                    }
+                                                };
+
+                                                const getStatusLabel = (status) => {
+                                                    switch (status) {
+                                                        case 'present': return 'Present';
+                                                        case 'half_day': return 'Half Day';
+                                                        case 'absent': return 'Absent';
+                                                        default: return 'Clocked In';
+                                                    }
+                                                };
+
+                                                return (
+                                                    <tr key={a.id} className="border-b hover:bg-gray-50">
+                                                        <td className="py-3 pr-4">
+                                                            <div className="font-medium">
+                                                                {a.staff ? `${a.staff.first_name} ${a.staff.last_name}` : 'Unknown'}
+                                                            </div>
+                                                            {a.staff?.job_role && (
+                                                                <div className="text-xs text-gray-500">{a.staff.job_role}</div>
+                                                            )}
+                                                        </td>
+                                                        <td className="py-3 pr-4">{a.date}</td>
+                                                        <td className="py-3 pr-4 text-green-600 font-medium">
+                                                            {formatTime(a.clock_in)}
+                                                        </td>
+                                                        <td className="py-3 pr-4 text-red-600 font-medium">
+                                                            {a.clock_out ? formatTime(a.clock_out) : (
+                                                                <span className="text-blue-500 italic">Active</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="py-3 pr-4">
+                                                            {hoursWorked > 0 ? (
+                                                                <div>
+                                                                    <span className="font-medium">{hoursWorked.toFixed(2)} hrs</span>
+                                                                    {overtime > 0 && (
+                                                                        <div className="text-xs text-purple-600">
+                                                                            +{overtime.toFixed(2)} OT
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-gray-400">-</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="py-3 pr-4">
+                                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(a.status)}`}>
+                                                                {getStatusLabel(a.status)}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                <div className="text-center py-8 text-gray-500">
+                                    No attendance records yet. Staff can clock in/out from the employee portal.
+                                </div>
+                            )}
                         </div>
                     )}
 
+
                     {/* Settings View */}
                     {view === 'settings' && !loading && (
-                        <div className="bg-white p-4 rounded-lg shadow-sm border">
-                            <h2 className="text-lg font-semibold mb-4">Settings</h2>
+                        <div className="space-y-6">
+                            {/* Header with Save Button */}
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-lg font-semibold">Settings</h2>
+                                <button
+                                    onClick={handleSaveSettings}
+                                    disabled={settingsSaving}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50"
+                                >
+                                    {settingsSaving ? 'Saving...' : 'Save All Changes'}
+                                </button>
+                            </div>
 
-                            <div className="space-y-4">
-                                <div>
-                                    <h3 className="text-sm font-medium mb-2">Clinic Locations</h3>
-                                    <div className="space-y-2">
-                                        {locations.map(loc => (
-                                            <div key={loc.id} className="p-3 bg-gray-50 rounded border">
-                                                <div className="font-medium">{loc.name}</div>
-                                                <div className="text-sm text-gray-500">{loc.address || loc.town}</div>
+                            {/* Clinic Profile Settings */}
+                            <div className="bg-white p-5 rounded-lg shadow-sm border">
+                                <h3 className="text-md font-semibold mb-4 pb-2 border-b">Clinic Profile</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Clinic Name</label>
+                                        <input
+                                            type="text"
+                                            className="w-full border rounded-md px-3 py-2"
+                                            value={clinicSettings.clinic.name || ''}
+                                            onChange={(e) => setClinicSettings({
+                                                ...clinicSettings,
+                                                clinic: { ...clinicSettings.clinic, name: e.target.value }
+                                            })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Town/City</label>
+                                        <input
+                                            type="text"
+                                            className="w-full border rounded-md px-3 py-2"
+                                            value={clinicSettings.clinic.town || ''}
+                                            onChange={(e) => setClinicSettings({
+                                                ...clinicSettings,
+                                                clinic: { ...clinicSettings.clinic, town: e.target.value }
+                                            })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                                        <input
+                                            type="tel"
+                                            className="w-full border rounded-md px-3 py-2"
+                                            value={clinicSettings.clinic.phone || ''}
+                                            onChange={(e) => setClinicSettings({
+                                                ...clinicSettings,
+                                                clinic: { ...clinicSettings.clinic, phone: e.target.value }
+                                            })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Contact Person</label>
+                                        <input
+                                            type="text"
+                                            className="w-full border rounded-md px-3 py-2"
+                                            value={clinicSettings.clinic.contact_name || ''}
+                                            onChange={(e) => setClinicSettings({
+                                                ...clinicSettings,
+                                                clinic: { ...clinicSettings.clinic, contact_name: e.target.value }
+                                            })}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Attendance Settings */}
+                            <div className="bg-white p-5 rounded-lg shadow-sm border">
+                                <h3 className="text-md font-semibold mb-4 pb-2 border-b">Attendance Settings</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Required Daily Hours</label>
+                                        <input
+                                            type="number"
+                                            step="0.5"
+                                            min="1"
+                                            max="24"
+                                            className="w-full border rounded-md px-3 py-2"
+                                            value={clinicSettings.attendance.required_daily_hours}
+                                            onChange={(e) => setClinicSettings({
+                                                ...clinicSettings,
+                                                attendance: { ...clinicSettings.attendance, required_daily_hours: parseFloat(e.target.value) || 8 }
+                                            })}
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1">Standard workday duration</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Unpaid Break (minutes)</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="120"
+                                            className="w-full border rounded-md px-3 py-2"
+                                            value={clinicSettings.attendance.unpaid_break_minutes}
+                                            onChange={(e) => setClinicSettings({
+                                                ...clinicSettings,
+                                                attendance: { ...clinicSettings.attendance, unpaid_break_minutes: parseInt(e.target.value) || 0 }
+                                            })}
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1">Lunch/break deduction</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Late Threshold (minutes)</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="60"
+                                            className="w-full border rounded-md px-3 py-2"
+                                            value={clinicSettings.attendance.late_threshold_minutes}
+                                            onChange={(e) => setClinicSettings({
+                                                ...clinicSettings,
+                                                attendance: { ...clinicSettings.attendance, late_threshold_minutes: parseInt(e.target.value) || 0 }
+                                            })}
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1">Grace period before late</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Overtime Multiplier</label>
+                                        <input
+                                            type="number"
+                                            step="0.1"
+                                            min="1"
+                                            max="3"
+                                            className="w-full border rounded-md px-3 py-2"
+                                            value={clinicSettings.attendance.overtime_multiplier}
+                                            onChange={(e) => setClinicSettings({
+                                                ...clinicSettings,
+                                                attendance: { ...clinicSettings.attendance, overtime_multiplier: parseFloat(e.target.value) || 1.5 }
+                                            })}
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1">OT pay rate (1.5 = 1.5x)</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Leave Policy Settings */}
+                            <div className="bg-white p-5 rounded-lg shadow-sm border">
+                                <h3 className="text-md font-semibold mb-4 pb-2 border-b">Leave Policy</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Annual Leave (days/year)</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="60"
+                                            className="w-full border rounded-md px-3 py-2"
+                                            value={clinicSettings.leave.annual_leave_days}
+                                            onChange={(e) => setClinicSettings({
+                                                ...clinicSettings,
+                                                leave: { ...clinicSettings.leave, annual_leave_days: parseInt(e.target.value) || 0 }
+                                            })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Sick Leave (days/year)</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="30"
+                                            className="w-full border rounded-md px-3 py-2"
+                                            value={clinicSettings.leave.sick_leave_days}
+                                            onChange={(e) => setClinicSettings({
+                                                ...clinicSettings,
+                                                leave: { ...clinicSettings.leave, sick_leave_days: parseInt(e.target.value) || 0 }
+                                            })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Maternity Leave (days)</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="180"
+                                            className="w-full border rounded-md px-3 py-2"
+                                            value={clinicSettings.leave.maternity_leave_days}
+                                            onChange={(e) => setClinicSettings({
+                                                ...clinicSettings,
+                                                leave: { ...clinicSettings.leave, maternity_leave_days: parseInt(e.target.value) || 0 }
+                                            })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Paternity Leave (days)</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="30"
+                                            className="w-full border rounded-md px-3 py-2"
+                                            value={clinicSettings.leave.paternity_leave_days}
+                                            onChange={(e) => setClinicSettings({
+                                                ...clinicSettings,
+                                                leave: { ...clinicSettings.leave, paternity_leave_days: parseInt(e.target.value) || 0 }
+                                            })}
+                                        />
+                                    </div>
+                                    <div className="flex items-center">
+                                        <label className="flex items-center cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                className="mr-2 h-4 w-4"
+                                                checked={clinicSettings.leave.leave_carryover_allowed}
+                                                onChange={(e) => setClinicSettings({
+                                                    ...clinicSettings,
+                                                    leave: { ...clinicSettings.leave, leave_carryover_allowed: e.target.checked }
+                                                })}
+                                            />
+                                            <span className="text-sm font-medium text-gray-700">Allow Leave Carryover</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Clinic Locations */}
+                            <div className="bg-white p-5 rounded-lg shadow-sm border">
+                                <h3 className="text-md font-semibold mb-4 pb-2 border-b">Clinic Locations</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {locations.map(loc => (
+                                        <div key={loc.id} className="p-4 bg-gray-50 rounded-lg border">
+                                            <div className="flex items-start justify-between">
+                                                <div>
+                                                    <div className="font-medium">{loc.name}</div>
+                                                    <div className="text-sm text-gray-500">{loc.address || loc.town}</div>
+                                                    {loc.phone && <div className="text-sm text-gray-500">{loc.phone}</div>}
+                                                </div>
                                                 {loc.is_primary && (
-                                                    <span className="text-xs text-emerald-600">Primary</span>
+                                                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs rounded-full">Primary</span>
                                                 )}
                                             </div>
-                                        ))}
-                                    </div>
+                                        </div>
+                                    ))}
+                                    {locations.length === 0 && (
+                                        <p className="text-gray-500 text-sm">No locations configured</p>
+                                    )}
                                 </div>
                             </div>
                         </div>
                     )}
+
                 </main>
             </div>
 

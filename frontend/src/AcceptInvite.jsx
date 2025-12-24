@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
 import { verifyInvite, acceptInvite, setStaffToken } from './employeeApi';
 
 export default function AcceptInvite() {
-    const [searchParams] = useSearchParams();
-    const navigate = useNavigate();
-    const token = searchParams.get('token');
+    // Parse token from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -52,7 +51,8 @@ export default function AcceptInvite() {
         try {
             const result = await acceptInvite(token, password);
             setStaffToken(result.token);
-            navigate('/employee');
+            // Navigate to employee dashboard
+            window.location.href = '/employee';
         } catch (err) {
             setError(err.message || 'Failed to accept invitation');
             setSubmitting(false);
@@ -92,19 +92,19 @@ export default function AcceptInvite() {
                 <div className="text-center mb-8">
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome to HURE!</h1>
                     <p className="text-gray-600">
-                        You've been invited to join <span className="font-semibold">{inviteData?.clinic_name}</span>
+                        You've been invited to join <span className="font-semibold">{inviteData?.staff?.clinic?.name}</span>
                     </p>
                 </div>
 
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                     <p className="text-sm text-gray-700">
-                        <span className="font-semibold">Name:</span> {inviteData?.staff?.first_name} {inviteData?.staff?.last_name}
+                        <span className="font-semibold">Name:</span> {inviteData?.staff?.name}
                     </p>
                     <p className="text-sm text-gray-700 mt-1">
                         <span className="font-semibold">Email:</span> {inviteData?.staff?.email}
                     </p>
                     <p className="text-sm text-gray-700 mt-1">
-                        <span className="font-semibold">Role:</span> {inviteData?.staff?.role}
+                        <span className="font-semibold">Role:</span> {inviteData?.staff?.jobRole}
                     </p>
                 </div>
 

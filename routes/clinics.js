@@ -43,13 +43,36 @@ router.get('/', requireSuperAdmin, async (req, res) => {
             return res.status(500).json({ error: 'Failed to fetch clinics' });
         }
 
+        // Get staff counts for all clinics
+        const clinicIds = clinics.map(c => c.id);
+        const { data: staffCounts } = await supabaseAdmin
+            .from('staff')
+            .select('clinic_id')
+            .in('clinic_id', clinicIds);
+
+        // Count staff per clinic
+        const staffCountMap = {};
+        if (staffCounts) {
+            staffCounts.forEach(s => {
+                staffCountMap[s.clinic_id] = (staffCountMap[s.clinic_id] || 0) + 1;
+            });
+        }
+
         // Add plan details and usage info
         const enrichedClinics = clinics.map(clinic => {
             const planDetails = getPlanDetails(clinic.plan_product, clinic.plan_key);
-            const limits = planDetails ? checkPlanLimits(clinic, planDetails) : null;
+            const staffCount = staffCountMap[clinic.id] || 0;
+
+            // Create a modified clinic object with the actual staff count
+            const clinicWithCount = {
+                ...clinic,
+                staff_count: staffCount
+            };
+
+            const limits = planDetails ? checkPlanLimits(clinicWithCount, planDetails) : null;
 
             return {
-                ...clinic,
+                ...clinicWithCount,
                 planDetails,
                 limits
             };

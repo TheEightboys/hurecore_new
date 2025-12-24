@@ -1,9 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import * as employeeApi from './employeeApi';
 
 export default function EmployeeDashboard() {
-    const navigate = useNavigate();
     const [view, setView] = useState('dashboard');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -24,6 +22,11 @@ export default function EmployeeDashboard() {
 
     // Load initial data
     useEffect(() => {
+        // Check if authenticated before loading
+        if (!employeeApi.isStaffAuthenticated()) {
+            window.location.href = '/employee/login';
+            return;
+        }
         loadData();
     }, []);
 
@@ -60,7 +63,7 @@ export default function EmployeeDashboard() {
             setLoading(false);
             if (err.message.includes('Unauthorized') || err.message.includes('token')) {
                 employeeApi.clearStaffAuth();
-                navigate('/employee/login');
+                window.location.href = '/employee/login';
             }
         }
     }
@@ -183,7 +186,7 @@ export default function EmployeeDashboard() {
 
     function handleLogout() {
         employeeApi.clearStaffAuth();
-        navigate('/employee/login');
+        window.location.href = '/employee/login';
     }
 
     const viewTitle = {
@@ -285,7 +288,25 @@ export default function EmployeeDashboard() {
                         </button>
                     </nav>
 
-                    <div className="p-4 border-t">
+                    <div className="p-4 border-t space-y-2">
+                        {/* Admin View Button - only show for admin/owner role */}
+                        {(profile?.account_role === 'admin' || profile?.account_role === 'owner') && (
+                            <button
+                                onClick={() => {
+                                    // Set clinic ID for employer dashboard
+                                    if (profile?.clinic_id) {
+                                        localStorage.setItem('hure_clinic_id', profile.clinic_id);
+                                    }
+                                    window.location.href = '/employer';
+                                }}
+                                className="w-full text-left px-3 py-2 text-sm text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-md flex items-center gap-2"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                                </svg>
+                                Switch to Admin View
+                            </button>
+                        )}
                         <button
                             onClick={handleLogout}
                             className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md"
@@ -458,14 +479,19 @@ export default function EmployeeDashboard() {
                         <div className="bg-white p-4 rounded-lg shadow-sm border">
                             <div className="flex items-center justify-between mb-3">
                                 <h2 className="text-lg font-semibold">My Schedule</h2>
-                                <div className="text-sm text-gray-500">Assigned by admin</div>
+                                <div className="text-sm text-gray-500">Assigned & available shifts</div>
                             </div>
                             <div className="space-y-3">
                                 {schedule.map(s => (
-                                    <div key={s.id} className="flex items-center justify-between p-3 rounded-md bg-gray-50 border">
+                                    <div key={s.id} className={`flex items-center justify-between p-3 rounded-md border ${s.isOpenShift ? 'bg-blue-50 border-blue-200' : 'bg-gray-50'}`}>
                                         <div>
                                             <div className="text-sm font-medium">
                                                 {s.date} · {s.start_time}–{s.end_time} · {s.role}
+                                                {s.isOpenShift && (
+                                                    <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full">
+                                                        Open Shift
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="text-xs text-gray-500 capitalize">{s.status}</div>
                                             {s.decline_reason && (
@@ -493,17 +519,23 @@ export default function EmployeeDashboard() {
                                     </div>
                                 ))}
                                 {schedule.length === 0 && (
-                                    <p className="text-gray-500 text-sm">No shifts assigned</p>
+                                    <p className="text-gray-500 text-sm">No shifts scheduled</p>
                                 )}
                             </div>
                         </div>
                     )}
 
+
                     {/* Attendance View */}
                     {view === 'attendance' && (
-                        <div className="bg-white p-4 rounded-lg shadow-sm border max-w-2xl">
+                        <div className="bg-white p-4 rounded-lg shadow-sm border max-w-4xl">
                             <div className="flex items-center justify-between mb-3">
-                                <h2 className="text-lg font-semibold">My Attendance</h2>
+                                <div>
+                                    <h2 className="text-lg font-semibold">My Attendance</h2>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Present (≥8 hrs) | Half Day (≥4 hrs) | Absent (&lt;4 hrs)
+                                    </p>
+                                </div>
                                 <button
                                     onClick={exportAttendance}
                                     className="px-3 py-2 rounded-md bg-white border text-sm hover:bg-gray-50"
@@ -517,16 +549,83 @@ export default function EmployeeDashboard() {
                                         <th className="py-2">Date</th>
                                         <th className="py-2">Clock In</th>
                                         <th className="py-2">Clock Out</th>
+                                        <th className="py-2">Hours Worked</th>
+                                        <th className="py-2">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {attendance.slice().reverse().map(a => (
-                                        <tr key={a.id} className="border-b">
-                                            <td className="py-2">{a.date}</td>
-                                            <td className="py-2">{a.clock_in || '—'}</td>
-                                            <td className="py-2">{a.clock_out || '—'}</td>
-                                        </tr>
-                                    ))}
+                                    {attendance.slice().reverse().map(a => {
+                                        // Format timestamps to readable time
+                                        const formatTime = (timestamp) => {
+                                            if (!timestamp) return '—';
+                                            const date = new Date(timestamp);
+                                            return date.toLocaleTimeString('en-US', {
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                                hour12: true
+                                            });
+                                        };
+
+                                        // Calculate overtime
+                                        const hoursWorked = a.hours_worked || 0;
+                                        const overtime = hoursWorked > 8 ? hoursWorked - 8 : 0;
+
+                                        // Status badge colors
+                                        const getStatusBadge = (status) => {
+                                            switch (status) {
+                                                case 'present':
+                                                    return 'bg-green-100 text-green-700';
+                                                case 'half_day':
+                                                    return 'bg-yellow-100 text-yellow-700';
+                                                case 'absent':
+                                                    return 'bg-red-100 text-red-700';
+                                                default:
+                                                    return 'bg-blue-100 text-blue-700';
+                                            }
+                                        };
+
+                                        const getStatusLabel = (status) => {
+                                            switch (status) {
+                                                case 'present': return 'Present';
+                                                case 'half_day': return 'Half Day';
+                                                case 'absent': return 'Absent';
+                                                default: return 'Clocked In';
+                                            }
+                                        };
+
+                                        return (
+                                            <tr key={a.id} className="border-b">
+                                                <td className="py-2">{a.date}</td>
+                                                <td className="py-2 text-green-600 font-medium">
+                                                    {formatTime(a.clock_in)}
+                                                </td>
+                                                <td className="py-2 text-red-600 font-medium">
+                                                    {a.clock_out ? formatTime(a.clock_out) : (
+                                                        <span className="text-blue-500 italic">Active</span>
+                                                    )}
+                                                </td>
+                                                <td className="py-2">
+                                                    {hoursWorked > 0 ? (
+                                                        <div>
+                                                            <span className="font-medium">{hoursWorked.toFixed(2)} hrs</span>
+                                                            {overtime > 0 && (
+                                                                <span className="text-xs text-purple-600 ml-1">
+                                                                    +{overtime.toFixed(2)} OT
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-gray-400">—</span>
+                                                    )}
+                                                </td>
+                                                <td className="py-2">
+                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(a.status)}`}>
+                                                        {getStatusLabel(a.status)}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                             {attendance.length === 0 && (
@@ -534,6 +633,7 @@ export default function EmployeeDashboard() {
                             )}
                         </div>
                     )}
+
 
                     {/* Leave View */}
                     {view === 'leave' && (
@@ -659,11 +759,16 @@ function LeaveView({ leaves, showModal, setShowModal, onSubmit }) {
                             <div>
                                 <div className="text-sm font-medium capitalize">{l.leave_type}</div>
                                 <div className="text-xs text-gray-500">
-                                    {l.start_date} to {l.end_date}
+                                    {l.from_date} to {l.to_date}
                                 </div>
                                 {l.reason && <div className="text-xs mt-1">{l.reason}</div>}
                             </div>
-                            <div className="text-sm capitalize">{l.status}</div>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${l.status === 'approved' ? 'bg-green-100 text-green-700' :
+                                    l.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                        'bg-yellow-100 text-yellow-700'
+                                }`}>
+                                {l.status}
+                            </span>
                         </div>
                     ))}
                     {leaves.length === 0 && (

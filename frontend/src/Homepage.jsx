@@ -69,21 +69,23 @@ export default function Homepage() {
                         {/* Badge */}
                         <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-emerald-400 text-sm mb-8">
                             <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-                            Healthcare Workforce Management Platform
+                            Multi-Tenant Staff Management Platform
                         </div>
 
                         {/* Headline */}
                         <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-                            Simplify Your
                             <span className="block bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
-                                Healthcare Staffing
+                                Hure Core
+                            </span>
+                            <span className="block text-3xl md:text-4xl mt-2 text-slate-300 font-medium">
+                                Multi-Tenant Staff Management
                             </span>
                         </h1>
 
                         {/* Subheadline */}
                         <p className="text-xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed">
-                            HURE streamlines staff management, scheduling, attendance tracking,
-                            and compliance for healthcare organizations of all sizes.
+                            HURE Core streamlines staff management, scheduling, attendance tracking,
+                            and compliance for organizations of all sizes.
                         </p>
 
                         {/* CTA Buttons */}
@@ -109,7 +111,7 @@ export default function Homepage() {
                                 <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                 </svg>
-                                <span>HIPAA Compliant</span>
+                                <span>Multi-Tenant</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
@@ -135,7 +137,7 @@ export default function Homepage() {
                         Everything You Need to Manage Your Team
                     </h2>
                     <p className="text-slate-400 text-center mb-16 max-w-2xl mx-auto">
-                        From onboarding to scheduling, HURE provides comprehensive tools for modern healthcare workforce management.
+                        From onboarding to scheduling, HURE Core provides comprehensive tools for modern workforce management.
                     </p>
 
                     <div className="grid md:grid-cols-3 gap-8">
@@ -148,7 +150,7 @@ export default function Homepage() {
                             </div>
                             <h3 className="text-lg font-semibold text-white mb-2">Staff Management</h3>
                             <p className="text-slate-400 text-sm leading-relaxed">
-                                Easily onboard, manage, and track your healthcare staff with comprehensive profiles and credentials.
+                                Easily onboard, manage, and track your staff with comprehensive profiles and credentials.
                             </p>
                         </div>
 
