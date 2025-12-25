@@ -2,7 +2,7 @@
  * HURE Core - Employer Portal API Client
  */
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 // Get auth token from localStorage
 function getToken() {
