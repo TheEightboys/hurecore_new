@@ -214,123 +214,156 @@ export default function HureSuperadminApp() {
         );
     }
 
-    // Stat Card Component
-    const StatCard = ({ label, value }) => (
-        <div className="bg-white border rounded-lg px-4 py-3">
-            <div className="text-xs text-slate-500">{label}</div>
-            <div className="text-xl font-semibold mt-1">{value}</div>
-        </div>
-    );
+    // Stat Card Component - Enhanced
+    const StatCard = ({ label, value, accent = 'emerald' }) => {
+        const accentColors = {
+            emerald: 'from-emerald-500 to-emerald-600',
+            blue: 'from-blue-500 to-blue-600',
+            amber: 'from-amber-500 to-amber-600',
+            purple: 'from-purple-500 to-purple-600'
+        };
+        return (
+            <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 p-5 relative overflow-hidden">
+                <div className={`absolute top-0 right-0 w-20 h-20 bg-gradient-to-br ${accentColors[accent]} opacity-10 rounded-bl-full`}></div>
+                <div className="text-xs font-medium text-slate-500 uppercase tracking-wide">{label}</div>
+                <div className="text-3xl font-bold mt-2 text-slate-800">{value}</div>
+            </div>
+        );
+    };
 
-    // Dashboard Tab
+    // Dashboard Tab - Compact (fits in viewport)
     const DashboardTab = () => (
         <div className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <StatCard label="Total clinics" value={stats.total || 0} />
-                <StatCard label="Active clinics" value={stats.active || 0} />
-                <StatCard label="Active bundles" value={stats.bundles || 0} />
-                <StatCard label="Care-only" value={stats.careOnly || 0} />
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <StatCard label="Total Clinics" value={stats.total || 0} accent="emerald" />
+                <StatCard label="Active Clinics" value={stats.active || 0} accent="blue" />
+                <StatCard label="Active Bundles" value={stats.bundles || 0} accent="amber" />
+                <StatCard label="Care-Only" value={stats.careOnly || 0} accent="purple" />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white border rounded-lg p-4">
-                    <h2 className="font-semibold text-sm mb-2">Core Plans</h2>
-                    <div className="space-y-2 text-sm">
+            {/* Plans and Audit in 3 columns */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {/* Core Plans */}
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
+                    <h2 className="font-semibold text-slate-800 mb-3 flex items-center gap-2 text-sm">
+                        <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                        Core Plans
+                    </h2>
+                    <div className="space-y-2">
                         {Object.entries(PLAN_CONFIG.core).map(([key, cfg]) => (
-                            <div key={key} className="flex justify-between">
-                                <span>{cfg.label}</span>
-                                <span className="text-slate-600">
+                            <div key={key} className="flex justify-between items-center py-2 px-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors text-sm">
+                                <span className="font-medium text-slate-700">{cfg.label}</span>
+                                <span className="text-xs text-slate-500">
                                     KSh {cfg.price.toLocaleString()} · {cfg.maxStaff} staff
                                 </span>
                             </div>
                         ))}
                     </div>
                 </div>
-                <div className="bg-white border rounded-lg p-4">
-                    <h2 className="font-semibold text-sm mb-2">Care Plans</h2>
-                    <div className="space-y-2 text-sm">
+
+                {/* Care Plans */}
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
+                    <h2 className="font-semibold text-slate-800 mb-3 flex items-center gap-2 text-sm">
+                        <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                        Care Plans
+                    </h2>
+                    <div className="space-y-2">
                         {Object.entries(PLAN_CONFIG.care).map(([key, cfg]) => (
-                            <div key={key} className="flex justify-between">
-                                <span>{cfg.label}</span>
-                                <span className="text-slate-600">
+                            <div key={key} className="flex justify-between items-center py-2 px-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors text-sm">
+                                <span className="font-medium text-slate-700">{cfg.label}</span>
+                                <span className="text-xs text-slate-500">
                                     KSh {cfg.price.toLocaleString()} · Unlimited staff
                                 </span>
                             </div>
                         ))}
                     </div>
                 </div>
-            </div>
 
-            <div className="bg-white border rounded-lg p-4">
-                <h2 className="font-semibold text-sm mb-2">Recent Audit Events</h2>
-                <ul className="text-sm max-h-40 overflow-auto">
-                    {audit.slice(0, 5).map(item => (
-                        <li key={item.id} className="py-2 border-b last:border-b-0">
-                            <div className="font-medium">{item.type}</div>
-                            <div className="text-xs text-slate-500">{new Date(item.created_at).toLocaleString()}</div>
-                        </li>
-                    ))}
-                    {audit.length === 0 && (
-                        <li className="text-xs text-slate-500">No audit events yet.</li>
-                    )}
-                </ul>
+                {/* Recent Audit Events */}
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
+                    <h2 className="font-semibold text-slate-800 mb-3 flex items-center gap-2 text-sm">
+                        <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
+                        Recent Audit Events
+                    </h2>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {audit.slice(0, 4).map(item => (
+                            <div key={item.id} className="py-2 px-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors">
+                                <div className="font-medium text-slate-700 text-sm">{item.type}</div>
+                                <div className="text-xs text-slate-400">{new Date(item.created_at).toLocaleString()}</div>
+                            </div>
+                        ))}
+                        {audit.length === 0 && (
+                            <div className="text-center py-4 text-slate-400">
+                                <div className="text-xl mb-1">📋</div>
+                                <div className="text-xs">No audit events yet</div>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
         </div>
     );
 
-    // Pending Tab
+    // Pending Tab - Enhanced
     const PendingTab = () => (
-        <div className="space-y-4">
+        <div className="space-y-6">
+            {/* Header with filter */}
             <div className="flex items-center justify-between">
-                <h2 className="font-semibold text-sm">Pending Clinics</h2>
+                <div>
+                    <h2 className="font-semibold text-lg text-slate-800">Pending Clinics</h2>
+                    <p className="text-sm text-slate-500 mt-1">Review and activate new clinic registrations</p>
+                </div>
                 <select
-                    className="border rounded px-2 py-1 text-xs"
+                    className="border border-slate-200 rounded-xl px-4 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                     value={pendingFilter}
                     onChange={e => setPendingFilter(e.target.value)}
                 >
-                    <option value="">All</option>
+                    <option value="">All Status</option>
                     <option value="pending_verification">Pending Verification</option>
                     <option value="pending_payment">Pending Payment</option>
                     <option value="pending_activation">Pending Activation</option>
                 </select>
             </div>
-            <div className="bg-white border rounded-lg overflow-hidden">
+
+            {/* Table Card */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                 <table className="w-full text-sm">
-                    <thead className="bg-slate-50 text-left text-xs text-slate-500 border-b">
+                    <thead className="bg-slate-50 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
                         <tr>
-                            <th className="px-3 py-2">Clinic</th>
-                            <th className="px-3 py-2">Email</th>
-                            <th className="px-3 py-2">Modules</th>
-                            <th className="px-3 py-2">Plan</th>
-                            <th className="px-3 py-2">Status</th>
-                            <th className="px-3 py-2">Actions</th>
+                            <th className="px-6 py-4">Clinic</th>
+                            <th className="px-6 py-4">Email</th>
+                            <th className="px-6 py-4">Modules</th>
+                            <th className="px-6 py-4">Plan</th>
+                            <th className="px-6 py-4">Status</th>
+                            <th className="px-6 py-4">Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-slate-100">
                         {filteredPending.map(p => (
-                            <tr key={p.id} className="border-t">
-                                <td className="px-3 py-2">{p.name}</td>
-                                <td className="px-3 py-2 text-xs">{p.email}</td>
-                                <td className="px-3 py-2 text-xs">{getModulesLabel(p.modules || [], p.is_bundle)}</td>
-                                <td className="px-3 py-2 text-xs">{getPlanLabel(p.plan_product, p.plan_key)}</td>
-                                <td className="px-3 py-2">
-                                    <span className="inline-flex px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-xs">
-                                        {p.status}
+                            <tr key={p.id} className="hover:bg-slate-50 transition-colors">
+                                <td className="px-6 py-4 font-medium text-slate-800">{p.name}</td>
+                                <td className="px-6 py-4 text-slate-600">{p.email}</td>
+                                <td className="px-6 py-4 text-slate-600">{getModulesLabel(p.modules || [], p.is_bundle)}</td>
+                                <td className="px-6 py-4 text-slate-600">{getPlanLabel(p.plan_product, p.plan_key)}</td>
+                                <td className="px-6 py-4">
+                                    <span className="inline-flex px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-medium">
+                                        {p.status?.replace(/_/g, ' ')}
                                     </span>
                                 </td>
-                                <td className="px-3 py-2">
+                                <td className="px-6 py-4">
                                     <div className="flex gap-2">
                                         {p.status !== 'rejected' && (
                                             <button
                                                 onClick={() => handleActivateClinic(p.id)}
-                                                className="px-2 py-1 text-xs rounded bg-emerald-600 text-white hover:bg-emerald-700"
+                                                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
                                             >
                                                 Activate
                                             </button>
                                         )}
                                         <button
                                             onClick={() => handleRejectClinic(p.id)}
-                                            className="px-2 py-1 text-xs rounded border hover:bg-slate-50"
+                                            className="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors"
                                         >
                                             Reject
                                         </button>
@@ -340,8 +373,9 @@ export default function HureSuperadminApp() {
                         ))}
                         {filteredPending.length === 0 && (
                             <tr>
-                                <td className="px-3 py-4 text-xs text-slate-500" colSpan={6}>
-                                    No pending clinics.
+                                <td className="px-6 py-12 text-center text-slate-400" colSpan={6}>
+                                    <div className="text-3xl mb-2">🎉</div>
+                                    <div className="text-sm">No pending clinics</div>
                                 </td>
                             </tr>
                         )}
@@ -351,65 +385,68 @@ export default function HureSuperadminApp() {
         </div>
     );
 
-    // Clinics Tab
+    // Clinics Tab - Enhanced
     const ClinicsTab = () => (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="lg:col-span-2 space-y-2">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Clinics Table */}
+            <div className="lg:col-span-2 space-y-4">
                 <div className="flex items-center justify-between">
-                    <h2 className="font-semibold text-sm">Clinics</h2>
+                    <div>
+                        <h2 className="font-semibold text-lg text-slate-800">All Clinics</h2>
+                        <p className="text-sm text-slate-500 mt-1">{filteredClinics.length} clinics</p>
+                    </div>
                     <select
-                        className="border rounded px-2 py-1 text-xs"
+                        className="border border-slate-200 rounded-xl px-4 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                         value={clinicFilter}
                         onChange={e => setClinicFilter(e.target.value)}
                     >
-                        <option value="all">All</option>
-                        <option value="core">Core only</option>
-                        <option value="care">Care only</option>
+                        <option value="all">All Types</option>
+                        <option value="core">Core Only</option>
+                        <option value="care">Care Only</option>
                         <option value="bundle">Bundle</option>
                     </select>
                 </div>
-                <div className="bg-white border rounded-lg overflow-hidden">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden max-h-[500px] overflow-y-auto">
                     <table className="w-full text-sm">
-                        <thead className="bg-slate-50 text-left text-xs text-slate-500 border-b">
+                        <thead className="bg-slate-50 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
                             <tr>
-                                <th className="px-3 py-2">Clinic</th>
-                                <th className="px-3 py-2">Modules</th>
-                                <th className="px-3 py-2">Plan</th>
-                                <th className="px-3 py-2">Status</th>
-                                <th className="px-3 py-2">Usage</th>
-                                <th className="px-3 py-2"></th>
+                                <th className="px-6 py-4">Clinic</th>
+                                <th className="px-6 py-4">Modules</th>
+                                <th className="px-6 py-4">Plan</th>
+                                <th className="px-6 py-4">Status</th>
+                                <th className="px-6 py-4">Usage</th>
+                                <th className="px-6 py-4"></th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="divide-y divide-slate-100">
                             {filteredClinics.map(c => (
-                                <tr key={c.id} className="border-t">
-                                    <td className="px-3 py-2">
-                                        <div className="font-medium text-sm">{c.name}</div>
+                                <tr key={c.id} className={`hover:bg-slate-50 transition-colors cursor-pointer ${selectedClinicId === c.id ? 'bg-emerald-50' : ''}`} onClick={() => setSelectedClinicId(c.id)}>
+                                    <td className="px-6 py-4">
+                                        <div className="font-medium text-slate-800">{c.name}</div>
                                         <div className="text-xs text-slate-500">{c.email}</div>
                                     </td>
-                                    <td className="px-3 py-2 text-xs">{getModulesLabel(c.modules || [], c.is_bundle)}</td>
-                                    <td className="px-3 py-2 text-xs">{getPlanLabel(c.plan_product, c.plan_key)}</td>
-                                    <td className="px-3 py-2">
-                                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs ${c.status === 'active' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
-                                            }`}>
+                                    <td className="px-6 py-4 text-slate-600">{getModulesLabel(c.modules || [], c.is_bundle)}</td>
+                                    <td className="px-6 py-4 text-slate-600">{getPlanLabel(c.plan_product, c.plan_key)}</td>
+                                    <td className="px-6 py-4">
+                                        <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${c.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
                                             {c.status}
                                         </span>
                                     </td>
-                                    <td className="px-3 py-2 text-xs">
-                                        {c.staff_count || 0} staff · {c.location_count || 0} loc
+                                    <td className="px-6 py-4 text-slate-600">
+                                        <span className="text-slate-800 font-medium">{c.staff_count || 0}</span> staff · <span className="text-slate-800 font-medium">{c.location_count || 0}</span> loc
                                     </td>
-                                    <td className="px-3 py-2">
+                                    <td className="px-6 py-4">
                                         <div className="flex gap-2">
                                             <button
-                                                onClick={() => setSelectedClinicId(c.id)}
-                                                className="px-2 py-1 text-xs rounded border"
+                                                onClick={(e) => { e.stopPropagation(); setSelectedClinicId(c.id); }}
+                                                className="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors"
                                             >
                                                 View
                                             </button>
                                             {c.status === 'active' && (
                                                 <button
-                                                    onClick={() => handleSuspendClinic(c.id)}
-                                                    className="px-2 py-1 text-xs rounded bg-rose-50 text-rose-700 border border-rose-100"
+                                                    onClick={(e) => { e.stopPropagation(); handleSuspendClinic(c.id); }}
+                                                    className="px-3 py-1.5 text-xs font-medium rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 transition-colors"
                                                 >
                                                     Suspend
                                                 </button>
@@ -423,33 +460,40 @@ export default function HureSuperadminApp() {
                 </div>
             </div>
 
-            <div className="bg-white border rounded-lg p-4">
-                <h2 className="font-semibold text-sm mb-2">Clinic Details</h2>
+            {/* Clinic Details Panel */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 h-fit sticky top-4">
+                <h2 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                    Clinic Details
+                </h2>
                 {!selectedClinic && (
-                    <div className="text-xs text-slate-500">Select a clinic from the table.</div>
+                    <div className="text-center py-8 text-slate-400">
+                        <div className="text-3xl mb-2">👆</div>
+                        <div className="text-sm">Select a clinic to view details</div>
+                    </div>
                 )}
                 {selectedClinic && (
-                    <div className="space-y-3 text-sm">
-                        <div>
-                            <div className="font-semibold">{selectedClinic.name}</div>
-                            <div className="text-xs text-slate-500">{selectedClinic.email}</div>
+                    <div className="space-y-4">
+                        <div className="pb-4 border-b border-slate-100">
+                            <div className="font-semibold text-lg text-slate-800">{selectedClinic.name}</div>
+                            <div className="text-sm text-slate-500">{selectedClinic.email}</div>
                         </div>
-                        <div className="grid grid-cols-2 gap-2 text-xs">
-                            <div className="bg-slate-50 rounded p-2">
-                                <div className="text-slate-500">Plan</div>
-                                <div className="font-medium">{getPlanLabel(selectedClinic.plan_product, selectedClinic.plan_key)}</div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4">
+                                <div className="text-xs text-slate-500 uppercase tracking-wide">Plan</div>
+                                <div className="font-semibold text-slate-800 mt-1">{getPlanLabel(selectedClinic.plan_product, selectedClinic.plan_key)}</div>
                             </div>
-                            <div className="bg-slate-50 rounded p-2">
-                                <div className="text-slate-500">Staff</div>
-                                <div className="font-medium">{selectedClinic.staff_count || 0}</div>
+                            <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-4">
+                                <div className="text-xs text-slate-500 uppercase tracking-wide">Staff</div>
+                                <div className="font-semibold text-slate-800 mt-1">{selectedClinic.staff_count || 0}</div>
                             </div>
-                            <div className="bg-slate-50 rounded p-2">
-                                <div className="text-slate-500">Locations</div>
-                                <div className="font-medium">{selectedClinic.location_count || 0}</div>
+                            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4">
+                                <div className="text-xs text-slate-500 uppercase tracking-wide">Locations</div>
+                                <div className="font-semibold text-slate-800 mt-1">{selectedClinic.location_count || 0}</div>
                             </div>
-                            <div className="bg-slate-50 rounded p-2">
-                                <div className="text-slate-500">Bundle</div>
-                                <div className="font-medium">{selectedClinic.is_bundle ? 'Yes' : 'No'}</div>
+                            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4">
+                                <div className="text-xs text-slate-500 uppercase tracking-wide">Bundle</div>
+                                <div className="font-semibold text-slate-800 mt-1">{selectedClinic.is_bundle ? 'Yes' : 'No'}</div>
                             </div>
                         </div>
                     </div>
@@ -458,42 +502,48 @@ export default function HureSuperadminApp() {
         </div>
     );
 
-    // Transactions Tab
+    // Transactions Tab - Enhanced
     const TransactionsTab = () => (
-        <div className="space-y-3">
-            <h2 className="font-semibold text-sm">Transactions</h2>
-            <div className="bg-white border rounded-lg overflow-hidden">
+        <div className="space-y-6">
+            <div>
+                <h2 className="font-semibold text-lg text-slate-800">Transactions</h2>
+                <p className="text-sm text-slate-500 mt-1">Payment history and transaction records</p>
+            </div>
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                 <table className="w-full text-sm">
-                    <thead className="bg-slate-50 text-left text-xs text-slate-500 border-b">
+                    <thead className="bg-slate-50 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
                         <tr>
-                            <th className="px-3 py-2">Ref</th>
-                            <th className="px-3 py-2">Clinic</th>
-                            <th className="px-3 py-2">Amount</th>
-                            <th className="px-3 py-2">Method</th>
-                            <th className="px-3 py-2">Status</th>
-                            <th className="px-3 py-2">Date</th>
+                            <th className="px-6 py-4">Reference</th>
+                            <th className="px-6 py-4">Clinic</th>
+                            <th className="px-6 py-4">Amount</th>
+                            <th className="px-6 py-4">Method</th>
+                            <th className="px-6 py-4">Status</th>
+                            <th className="px-6 py-4">Date</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-slate-100">
                         {transactions.map(t => (
-                            <tr key={t.id} className="border-t">
-                                <td className="px-3 py-2 text-xs">{t.tx_ref || t.id.slice(0, 8)}</td>
-                                <td className="px-3 py-2 text-xs">{t.clinic?.name || 'N/A'}</td>
-                                <td className="px-3 py-2 text-xs">KSh {(t.final_amount || 0).toLocaleString()}</td>
-                                <td className="px-3 py-2 text-xs">{t.method || '-'}</td>
-                                <td className="px-3 py-2">
-                                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs ${t.status === 'success' ? 'bg-emerald-50 text-emerald-700' :
-                                        t.status === 'failed' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'
+                            <tr key={t.id} className="hover:bg-slate-50 transition-colors">
+                                <td className="px-6 py-4 font-mono text-slate-600">{t.tx_ref || t.id.slice(0, 8)}</td>
+                                <td className="px-6 py-4 font-medium text-slate-800">{t.clinic?.name || 'N/A'}</td>
+                                <td className="px-6 py-4 font-semibold text-slate-800">KSh {(t.final_amount || 0).toLocaleString()}</td>
+                                <td className="px-6 py-4 text-slate-600">{t.method || '-'}</td>
+                                <td className="px-6 py-4">
+                                    <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${t.status === 'success' ? 'bg-emerald-100 text-emerald-700' :
+                                        t.status === 'failed' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
                                         }`}>
                                         {t.status}
                                     </span>
                                 </td>
-                                <td className="px-3 py-2 text-xs">{new Date(t.created_at).toLocaleDateString()}</td>
+                                <td className="px-6 py-4 text-slate-600">{new Date(t.created_at).toLocaleDateString()}</td>
                             </tr>
                         ))}
                         {transactions.length === 0 && (
                             <tr>
-                                <td className="px-3 py-4 text-xs text-slate-500" colSpan={6}>No transactions yet.</td>
+                                <td className="px-6 py-12 text-center text-slate-400" colSpan={6}>
+                                    <div className="text-3xl mb-2">💳</div>
+                                    <div className="text-sm">No transactions yet</div>
+                                </td>
                             </tr>
                         )}
                     </tbody>
@@ -502,43 +552,49 @@ export default function HureSuperadminApp() {
         </div>
     );
 
-    // Subscriptions Tab
+    // Subscriptions Tab - Enhanced
     const SubscriptionsTab = () => (
-        <div className="space-y-3">
-            <h2 className="font-semibold text-sm">Subscriptions</h2>
-            <div className="bg-white border rounded-lg overflow-hidden">
+        <div className="space-y-6">
+            <div>
+                <h2 className="font-semibold text-lg text-slate-800">Subscriptions</h2>
+                <p className="text-sm text-slate-500 mt-1">Active subscription plans and renewals</p>
+            </div>
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                 <table className="w-full text-sm">
-                    <thead className="bg-slate-50 text-left text-xs text-slate-500 border-b">
+                    <thead className="bg-slate-50 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
                         <tr>
-                            <th className="px-3 py-2">Clinic</th>
-                            <th className="px-3 py-2">Plan</th>
-                            <th className="px-3 py-2">Modules</th>
-                            <th className="px-3 py-2">Amount</th>
-                            <th className="px-3 py-2">Status</th>
-                            <th className="px-3 py-2">Renewal</th>
+                            <th className="px-6 py-4">Clinic</th>
+                            <th className="px-6 py-4">Plan</th>
+                            <th className="px-6 py-4">Modules</th>
+                            <th className="px-6 py-4">Amount</th>
+                            <th className="px-6 py-4">Status</th>
+                            <th className="px-6 py-4">Next Renewal</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-slate-100">
                         {subscriptions.map(s => (
-                            <tr key={s.id} className="border-t">
-                                <td className="px-3 py-2 text-xs">{s.clinic?.name || 'N/A'}</td>
-                                <td className="px-3 py-2 text-xs">{getPlanLabel(s.plan_product, s.plan_key)}</td>
-                                <td className="px-3 py-2 text-xs">{getModulesLabel(s.modules || [], s.is_bundle)}</td>
-                                <td className="px-3 py-2 text-xs">KSh {(s.final_amount || 0).toLocaleString()}</td>
-                                <td className="px-3 py-2">
-                                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs ${s.status === 'active' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'
+                            <tr key={s.id} className="hover:bg-slate-50 transition-colors">
+                                <td className="px-6 py-4 font-medium text-slate-800">{s.clinic?.name || 'N/A'}</td>
+                                <td className="px-6 py-4 text-slate-600">{getPlanLabel(s.plan_product, s.plan_key)}</td>
+                                <td className="px-6 py-4 text-slate-600">{getModulesLabel(s.modules || [], s.is_bundle)}</td>
+                                <td className="px-6 py-4 font-semibold text-slate-800">KSh {(s.final_amount || 0).toLocaleString()}</td>
+                                <td className="px-6 py-4">
+                                    <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${s.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'
                                         }`}>
                                         {s.status}
                                     </span>
                                 </td>
-                                <td className="px-3 py-2 text-xs">
+                                <td className="px-6 py-4 text-slate-600">
                                     {s.next_renewal_at ? new Date(s.next_renewal_at).toLocaleDateString() : '-'}
                                 </td>
                             </tr>
                         ))}
                         {subscriptions.length === 0 && (
                             <tr>
-                                <td className="px-3 py-4 text-xs text-slate-500" colSpan={6}>No subscriptions yet.</td>
+                                <td className="px-6 py-12 text-center text-slate-400" colSpan={6}>
+                                    <div className="text-3xl mb-2">📋</div>
+                                    <div className="text-sm">No subscriptions yet</div>
+                                </td>
                             </tr>
                         )}
                     </tbody>
@@ -872,34 +928,100 @@ export default function HureSuperadminApp() {
         </div>
     );
 
-    // Settings Tab
+    // Settings Tab - Enhanced
     const SettingsTab = () => (
-        <div className="space-y-4 text-sm">
-            <div className="bg-white border rounded-lg p-4 space-y-2">
-                <h2 className="font-semibold text-sm mb-1">Billing Configuration</h2>
-                <div className="text-xs text-slate-600">
-                    Gateway: Pesapal (M-Pesa + Card) · Trial: 14 days · Bundle discount: {PLAN_CONFIG.bundleDiscountPercent}%
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                    <div>
-                        <h3 className="font-semibold text-xs mb-1">Core Plans</h3>
-                        <ul className="text-xs space-y-1">
-                            {Object.entries(PLAN_CONFIG.core).map(([key, cfg]) => (
-                                <li key={key}>
-                                    {cfg.label}: KSh {cfg.price.toLocaleString()} · {cfg.maxStaff} staff · {cfg.maxLocations} locations
-                                </li>
-                            ))}
-                        </ul>
+        <div className="space-y-6">
+            {/* Billing Configuration Header Card */}
+            <div className="bg-gradient-to-r from-emerald-600 to-emerald-500 rounded-2xl p-6 text-white shadow-lg">
+                <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                        💳
                     </div>
                     <div>
-                        <h3 className="font-semibold text-xs mb-1">Care Plans</h3>
-                        <ul className="text-xs space-y-1">
-                            {Object.entries(PLAN_CONFIG.care).map(([key, cfg]) => (
-                                <li key={key}>
-                                    {cfg.label}: KSh {cfg.price.toLocaleString()} · Unlimited staff · {cfg.maxLocations} locations
-                                </li>
-                            ))}
-                        </ul>
+                        <h2 className="font-bold text-xl">Billing Configuration</h2>
+                        <p className="text-emerald-100 text-sm">Payment gateway and pricing settings</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Gateway Info Card */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                    Gateway Settings
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4">
+                        <div className="text-xs text-slate-500 uppercase tracking-wide mb-1">Payment Gateway</div>
+                        <div className="font-semibold text-slate-800">Pesapal</div>
+                        <div className="text-xs text-slate-600 mt-1">M-Pesa + Card</div>
+                    </div>
+                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4">
+                        <div className="text-xs text-slate-500 uppercase tracking-wide mb-1">Trial Period</div>
+                        <div className="font-semibold text-slate-800">14 Days</div>
+                        <div className="text-xs text-slate-600 mt-1">Free trial for new clinics</div>
+                    </div>
+                    <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-4">
+                        <div className="text-xs text-slate-500 uppercase tracking-wide mb-1">Bundle Discount</div>
+                        <div className="font-semibold text-slate-800">{PLAN_CONFIG.bundleDiscountPercent}% Off</div>
+                        <div className="text-xs text-slate-600 mt-1">For Core + Care bundles</div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Plans Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Core Plans Card */}
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center text-xl">
+                            🏢
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-slate-800">Core Plans</h3>
+                            <p className="text-xs text-slate-500">Staff & schedule management</p>
+                        </div>
+                    </div>
+                    <div className="space-y-3">
+                        {Object.entries(PLAN_CONFIG.core).map(([key, cfg]) => (
+                            <div key={key} className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-slate-50 to-slate-100 hover:from-emerald-50 hover:to-emerald-100 transition-colors border border-slate-100">
+                                <div>
+                                    <div className="font-semibold text-slate-800">{cfg.label}</div>
+                                    <div className="text-xs text-slate-500 mt-0.5">{cfg.maxStaff} staff · {cfg.maxLocations} locations</div>
+                                </div>
+                                <div className="text-right">
+                                    <div className="font-bold text-emerald-600">KSh {cfg.price.toLocaleString()}</div>
+                                    <div className="text-xs text-slate-400">/month</div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Care Plans Card */}
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-xl">
+                            💊
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-slate-800">Care Plans</h3>
+                            <p className="text-xs text-slate-500">Healthcare compliance & docs</p>
+                        </div>
+                    </div>
+                    <div className="space-y-3">
+                        {Object.entries(PLAN_CONFIG.care).map(([key, cfg]) => (
+                            <div key={key} className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-slate-50 to-slate-100 hover:from-blue-50 hover:to-blue-100 transition-colors border border-slate-100">
+                                <div>
+                                    <div className="font-semibold text-slate-800">{cfg.label}</div>
+                                    <div className="text-xs text-slate-500 mt-0.5">Unlimited staff · {cfg.maxLocations} locations</div>
+                                </div>
+                                <div className="text-right">
+                                    <div className="font-bold text-blue-600">KSh {cfg.price.toLocaleString()}</div>
+                                    <div className="text-xs text-slate-400">/month</div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
@@ -963,64 +1085,69 @@ export default function HureSuperadminApp() {
             {/* Sidebar */}
             <aside className={`
                 fixed lg:sticky top-0 left-0 z-40
-                w-60 shrink-0 bg-white border-r flex flex-col min-h-screen
+                w-64 shrink-0 bg-gradient-to-b from-slate-900 to-slate-800 flex flex-col min-h-screen
                 transform transition-transform duration-300 ease-in-out
                 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
             `}>
-                <div className="px-4 py-3 border-b">
-                    <div className="text-xs font-semibold text-emerald-700">HURE</div>
-                    <div className="text-sm font-semibold">SuperAdmin</div>
-                    <div className="text-xs text-slate-500">Core + Care</div>
+                <div className="px-6 py-5">
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center text-white font-bold">H</div>
+                        <div>
+                            <div className="text-white font-bold text-sm">HURE</div>
+                            <div className="text-slate-400 text-xs">SuperAdmin Panel</div>
+                        </div>
+                    </div>
                 </div>
-                <nav className="flex-1 px-2 py-3 text-sm space-y-1 overflow-y-auto">
+                <nav className="flex-1 px-3 py-4 text-sm space-y-1">
                     {[
-                        'Dashboard',
-                        'Pending Onboarding',
-                        'Verifications',
-                        'Clinics',
-                        'Transactions',
-                        'Subscriptions',
-                        'Promos',
-                        'Audit',
-                        'Site Content',
-                        'Settings'
+                        { name: 'Dashboard', icon: '📊' },
+                        { name: 'Pending Onboarding', icon: '⏳' },
+                        { name: 'Verifications', icon: '✅' },
+                        { name: 'Clinics', icon: '🏥' },
+                        { name: 'Transactions', icon: '💳' },
+                        { name: 'Subscriptions', icon: '📋' },
+                        { name: 'Promos', icon: '🎁' },
+                        { name: 'Audit', icon: '📝' },
+                        { name: 'Site Content', icon: '📄' },
+                        { name: 'Settings', icon: '⚙️' }
                     ].map(tab => (
                         <button
-                            key={tab}
-                            onClick={() => { setActiveTab(tab); setSidebarOpen(false); }}
-                            className={`w-full text-left px-3 py-2 rounded-md mb-1 ${activeTab === tab
-                                ? 'bg-emerald-50 text-emerald-800 border border-emerald-100'
-                                : 'text-slate-700 hover:bg-slate-50'
+                            key={tab.name}
+                            onClick={() => { setActiveTab(tab.name); setSidebarOpen(false); }}
+                            className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all ${activeTab === tab.name
+                                ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
+                                : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
                                 }`}
                         >
-                            {tab}
+                            <span className="mr-3">{tab.icon}</span>
+                            {tab.name}
                         </button>
                     ))}
                 </nav>
-                <div className="px-4 py-3 border-t text-xs text-slate-500">
+                <div className="px-4 py-4 border-t border-slate-700">
                     <button
                         onClick={() => { api.logout(); setIsAuthenticated(false); window.location.href = '/'; }}
-                        className="text-red-600 hover:text-red-800"
+                        className="w-full text-left px-4 py-2 rounded-xl text-sm text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition-colors"
                     >
-                        Logout
+                        🚪 Logout
                     </button>
                 </div>
             </aside>
 
             {/* Main */}
-            <main className="flex-1 p-4 lg:p-6 pt-16 lg:pt-6">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
+            <main className="flex-1 p-6 lg:p-8 pt-20 lg:pt-8 bg-slate-50">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-3">
                     <div>
-                        <h1 className="text-lg font-semibold">{activeTab}</h1>
-                        <div className="text-xs text-slate-500">
-                            Connected to backend API
+                        <h1 className="text-2xl font-bold text-slate-800">{activeTab}</h1>
+                        <div className="text-sm text-slate-500 mt-1">
+                            Manage your platform with ease
                         </div>
                     </div>
                     <button
                         onClick={loadDashboardData}
-                        className="text-xs text-blue-600 hover:underline"
+                        className="px-4 py-2 bg-white rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors shadow-sm"
                     >
-                        Refresh Data
+                        🔄 Refresh Data
                     </button>
                 </div>
                 <MainContent />

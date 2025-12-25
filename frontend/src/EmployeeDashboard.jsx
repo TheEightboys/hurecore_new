@@ -337,100 +337,86 @@ export default function EmployeeDashboard() {
                     />
                 )}
 
-                {/* Sidebar */}
+                {/* Sidebar - Enhanced with dark theme */}
                 <aside className={`
                     fixed lg:sticky top-0 left-0 z-40
-                    w-64 lg:w-72 bg-white border-r border-gray-200 min-h-screen flex flex-col
+                    w-64 lg:w-72 bg-gradient-to-b from-slate-900 to-slate-800 h-screen flex flex-col
                     transform transition-transform duration-300 ease-in-out
                     ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
                 `}>
-                    <div className="p-4 border-b">
+                    <div className="p-5 border-b border-slate-700">
                         <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
-                                HC
+                            <div className="h-10 w-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white font-bold">
+                                H
                             </div>
                             <div>
-                                <div className="text-sm font-semibold">HURE Core</div>
-                                <div className="text-xs text-gray-500">Employee Portal</div>
+                                <div className="text-sm font-bold text-white">HURE Core</div>
+                                <div className="text-xs text-slate-400">Employee Portal</div>
                             </div>
                         </div>
                     </div>
 
-                    <nav className="p-4 space-y-1 text-sm flex-1">
+                    <nav className="p-4 space-y-1 text-sm flex-1 overflow-y-auto">
                         {/* Work Section */}
-                        <div className="text-xs text-gray-400 uppercase tracking-wider mb-2">Work</div>
+                        <div className="text-xs text-slate-500 uppercase tracking-wider mb-3 px-3">Work</div>
                         <button
                             onClick={() => setView('dashboard')}
-                            className={`flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-md transition-colors ${view === 'dashboard' ? 'bg-blue-100 text-blue-800 font-medium' : 'hover:bg-gray-100'}`}
+                            className={`flex items-center gap-3 w-full text-left px-4 py-3 rounded-xl transition-all font-medium ${view === 'dashboard' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'}`}
                         >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                            </svg>
+                            <span>🏠</span>
                             Home
                         </button>
                         <button
                             onClick={() => setView('schedule')}
-                            className={`flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-md transition-colors ${view === 'schedule' ? 'bg-blue-100 text-blue-800 font-medium' : 'hover:bg-gray-100'}`}
+                            className={`flex items-center gap-3 w-full text-left px-4 py-3 rounded-xl transition-all font-medium ${view === 'schedule' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'}`}
                         >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
+                            <span>📅</span>
                             Schedule
                         </button>
                         <button
                             onClick={() => setView('attendance')}
-                            className={`flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-md transition-colors ${view === 'attendance' ? 'bg-blue-100 text-blue-800 font-medium' : 'hover:bg-gray-100'}`}
+                            className={`flex items-center gap-3 w-full text-left px-4 py-3 rounded-xl transition-all font-medium ${view === 'attendance' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'}`}
                         >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                            <span>⏰</span>
                             Attendance
                         </button>
                         <button
                             onClick={() => setView('leave')}
-                            className={`flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-md transition-colors ${view === 'leave' ? 'bg-blue-100 text-blue-800 font-medium' : 'hover:bg-gray-100'}`}
+                            className={`flex items-center gap-3 w-full text-left px-4 py-3 rounded-xl transition-all font-medium ${view === 'leave' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'}`}
                         >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                            </svg>
+                            <span>🏖️</span>
                             Leave
                         </button>
 
                         {/* Documents Section */}
-                        <div className="text-xs text-gray-400 uppercase tracking-wider mt-4 mb-2">Documents</div>
+                        <div className="text-xs text-slate-500 uppercase tracking-wider mt-6 mb-3 px-3">Documents</div>
                         <button
                             onClick={() => setView('docs')}
-                            className={`flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-md transition-colors ${view === 'docs' ? 'bg-blue-100 text-blue-800 font-medium' : 'hover:bg-gray-100'}`}
+                            className={`flex items-center gap-3 w-full text-left px-4 py-3 rounded-xl transition-all font-medium ${view === 'docs' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'}`}
                         >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
+                            <span>📄</span>
                             Docs & Policies
                         </button>
                         <button
                             onClick={() => setView('compliance')}
-                            className={`flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-md transition-colors ${view === 'compliance' ? 'bg-blue-100 text-blue-800 font-medium' : 'hover:bg-gray-100'}`}
+                            className={`flex items-center gap-3 w-full text-left px-4 py-3 rounded-xl transition-all font-medium ${view === 'compliance' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'}`}
                         >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                            </svg>
+                            <span>🛡️</span>
                             My Compliance Docs
                         </button>
 
                         {/* Account Section */}
-                        <div className="text-xs text-gray-400 uppercase tracking-wider mt-4 mb-2">Account</div>
+                        <div className="text-xs text-slate-500 uppercase tracking-wider mt-6 mb-3 px-3">Account</div>
                         <button
                             onClick={() => setView('profile')}
-                            className={`flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-md transition-colors ${view === 'profile' ? 'bg-blue-100 text-blue-800 font-medium' : 'hover:bg-gray-100'}`}
+                            className={`flex items-center gap-3 w-full text-left px-4 py-3 rounded-xl transition-all font-medium ${view === 'profile' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'}`}
                         >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
+                            <span>👤</span>
                             Profile
                         </button>
                     </nav>
 
-                    <div className="p-4 border-t space-y-2">
+                    <div className="p-4 border-t border-slate-700 space-y-2">
                         {/* Admin View Button - only show for admin/owner role */}
                         {(profile?.account_role === 'admin' || profile?.account_role === 'owner') && (
                             <button
@@ -441,25 +427,24 @@ export default function EmployeeDashboard() {
                                     }
                                     window.location.href = '/employer';
                                 }}
-                                className="w-full text-left px-3 py-2 text-sm text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-md flex items-center gap-2"
+                                className="w-full text-left px-4 py-2.5 text-sm text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-xl flex items-center gap-3 transition-colors"
                             >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-                                </svg>
+                                <span>⚡</span>
                                 Switch to Admin View
                             </button>
                         )}
                         <button
                             onClick={handleLogout}
-                            className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md"
+                            className="w-full text-left px-4 py-2.5 text-sm text-rose-400 hover:bg-rose-500/10 rounded-xl flex items-center gap-3 transition-colors"
                         >
+                            <span>🚪</span>
                             Logout
                         </button>
                     </div>
                 </aside>
 
                 {/* Main Content */}
-                <main className="flex-1 p-4 lg:p-8 pt-16 lg:pt-8">
+                <main className="flex-1 p-6 lg:p-10 pt-16 lg:pt-10">
                     <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
                         <div>
                             <h1 className="text-xl lg:text-2xl font-semibold">{viewTitle}</h1>

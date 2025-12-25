@@ -69,16 +69,15 @@ const statusPillClass = (status) => {
             return `${base} bg-slate-100 text-slate-700`;
     }
 };
-
 // ============================================
-// SHARED COMPONENTS
+// SHARED COMPONENTS - Enhanced
 // ============================================
 
 const Card = ({ title, right, children, className = '' }) => (
-    <div className={`bg-white rounded-2xl shadow-sm border border-slate-200 p-4 ${className}`}>
+    <div className={`bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 p-6 ${className}`}>
         {(title || right) && (
-            <div className="flex items-start justify-between gap-3 mb-3">
-                {title && <div className="font-semibold text-slate-900">{title}</div>}
+            <div className="flex items-start justify-between gap-4 mb-4">
+                {title && <div className="font-semibold text-lg text-slate-800">{title}</div>}
                 {right}
             </div>
         )}
@@ -88,11 +87,13 @@ const Card = ({ title, right, children, className = '' }) => (
 
 const Modal = ({ title, children, onClose }) => (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-        <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-xl border border-slate-200 p-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="text-lg font-bold">{title}</div>
-                <button className="px-2 py-1 rounded-lg border border-slate-300 hover:bg-slate-50 text-sm" onClick={onClose}>Close</button>
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+        <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-100 p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100">
+                <div className="text-xl font-bold text-slate-800">{title}</div>
+                <button className="px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-sm font-medium text-slate-600 transition-colors" onClick={onClose}>
+                    ✕ Close
+                </button>
             </div>
             {children}
         </div>
@@ -101,7 +102,7 @@ const Modal = ({ title, children, onClose }) => (
 
 const Field = ({ label, children }) => (
     <label className="block">
-        <div className="text-xs font-medium text-slate-600 mb-1">{label}</div>
+        <div className="text-sm font-medium text-slate-600 mb-2">{label}</div>
         {children}
     </label>
 );
@@ -109,20 +110,25 @@ const Field = ({ label, children }) => (
 const TabBtn = ({ label, active, onClick }) => (
     <button
         onClick={onClick}
-        className={`px-3 py-2 rounded-xl text-sm border ${active ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-800 border-slate-300 hover:bg-slate-50'
+        className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${active
+            ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/20'
+            : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:border-slate-300'
             }`}
     >
         {label}
     </button>
 );
 
-const NavBtn = ({ label, active, onClick }) => (
+const NavBtn = ({ label, active, onClick, icon }) => (
     <button
         onClick={onClick}
-        className={`w-full text-left px-3 py-2 rounded-xl text-sm ${active ? 'bg-slate-900 text-white' : 'hover:bg-slate-100 text-slate-800'
+        className={`w-full text-left px-3 py-2 rounded-lg font-medium transition-all flex items-center ${active
+            ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 text-white shadow-lg shadow-emerald-500/20'
+            : 'hover:bg-slate-700/50 text-white hover:text-white'
             }`}
     >
-        {label}
+        {icon && <span className="mr-2">{icon}</span>}
+        <span className="text-sm">{label}</span>
     </button>
 );
 
@@ -385,10 +391,10 @@ export default function EmployerDashboard() {
     // ============================================
 
     const TopBar = () => (
-        <div className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-slate-200">
-            <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold">H</div>
+        <div className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-b border-slate-200">
+            <div className="px-4 py-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-bold text-sm">H</div>
                     <div>
                         <div className="text-sm font-semibold">{org.name}</div>
                         <div className="text-xs text-slate-600">
@@ -421,31 +427,39 @@ export default function EmployerDashboard() {
     );
 
     // ============================================
-    // SIDEBAR
+    // SIDEBAR - Enhanced
     // ============================================
 
     const Sidebar = () => (
-        <div className="bg-white border-r border-slate-200 p-3 w-full md:w-64">
-            <div className="mb-3">
-                <div className="text-xs text-slate-500">Signed in as</div>
-                <div className="text-sm font-semibold">{currentUserRole} <span className="text-xs text-slate-500">({currentUserRole.toUpperCase()})</span></div>
-                <div className="text-xs text-slate-500 mt-1">Scope: {currentLocName}</div>
+        <div className="bg-gradient-to-b from-slate-900 to-slate-800 px-3 pt-5 pb-3 w-56 min-h-[calc(100vh-53px)] sticky top-0 flex flex-col shrink-0">
+            {/* User Info */}
+            <div className="mb-3 pb-3 border-b border-slate-700">
+                <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center text-white font-bold text-sm">
+                        {currentUserRole.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                        <div className="text-sm font-semibold text-white">{currentUserRole}</div>
+                        <div className="text-xs text-slate-300">{currentLocName}</div>
+                    </div>
+                </div>
             </div>
 
-            <nav className="space-y-1">
-                {has('view_dashboard') && <NavBtn label="Dashboard" active={view === 'dashboard'} onClick={() => setView('dashboard')} />}
-                {has('view_staff') && <NavBtn label="Staff" active={view === 'staff'} onClick={() => setView('staff')} />}
-                {has('view_schedule') && <NavBtn label="Schedule" active={view === 'schedule'} onClick={() => setView('schedule')} />}
-                {has('view_attendance') && <NavBtn label="Attendance" active={view === 'attendance'} onClick={() => setView('attendance')} />}
-                {has('export_payroll') && <NavBtn label="Payroll Export" active={view === 'payroll'} onClick={() => setView('payroll')} />}
-                {has('view_leave') && <NavBtn label="Leave" active={view === 'leave'} onClick={() => setView('leave')} />}
+            {/* Navigation */}
+            <nav className="space-y-0.5 flex-1">
+                {has('view_dashboard') && <NavBtn icon="📊" label="Dashboard" active={view === 'dashboard'} onClick={() => setView('dashboard')} />}
+                {has('view_staff') && <NavBtn icon="👥" label="Staff" active={view === 'staff'} onClick={() => setView('staff')} />}
+                {has('view_schedule') && <NavBtn icon="📅" label="Schedule" active={view === 'schedule'} onClick={() => setView('schedule')} />}
+                {has('view_attendance') && <NavBtn icon="⏰" label="Attendance" active={view === 'attendance'} onClick={() => setView('attendance')} />}
+                {has('export_payroll') && <NavBtn icon="💰" label="Payroll" active={view === 'payroll'} onClick={() => setView('payroll')} />}
+                {has('view_leave') && <NavBtn icon="🏖️" label="Leave" active={view === 'leave'} onClick={() => setView('leave')} />}
                 {(has('manage_org_verification') || has('manage_facility_verification')) &&
-                    <NavBtn label="Verification" active={view === 'verification'} onClick={() => setView('verification')} />}
+                    <NavBtn icon="✅" label="Verification" active={view === 'verification'} onClick={() => setView('verification')} />}
                 {(has('manage_org_settings') || has('manage_location_settings')) &&
-                    <NavBtn label="Settings" active={view === 'settings'} onClick={() => setView('settings')} />}
-                {has('view_billing') && <NavBtn label="Billing" active={view === 'billing'} onClick={() => setView('billing')} />}
-                {has('view_docs') && <NavBtn label="Documents" active={view === 'docs'} onClick={() => setView('docs')} />}
-                {has('view_audit') && <NavBtn label="Audit Log" active={view === 'audit'} onClick={() => setView('audit')} />}
+                    <NavBtn icon="⚙️" label="Settings" active={view === 'settings'} onClick={() => setView('settings')} />}
+                {has('view_billing') && <NavBtn icon="💳" label="Billing" active={view === 'billing'} onClick={() => setView('billing')} />}
+                {has('view_docs') && <NavBtn icon="📄" label="Documents" active={view === 'docs'} onClick={() => setView('docs')} />}
+                {has('view_audit') && <NavBtn icon="📝" label="Audit Log" active={view === 'audit'} onClick={() => setView('audit')} />}
             </nav>
         </div>
     );
@@ -1929,9 +1943,9 @@ export default function EmployerDashboard() {
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900">
             <TopBar />
-            <div className="grid grid-cols-1 md:grid-cols-[16rem_1fr]">
+            <div className="flex pt-[53px] min-h-screen">
                 <Sidebar />
-                <div className="min-h-[calc(100vh-60px)]">
+                <div className="flex-1 p-6">
                     {renderView()}
                 </div>
             </div>
