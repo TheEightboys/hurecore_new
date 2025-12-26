@@ -84,11 +84,6 @@ app.use('/api/staff', staffAuthRoutes);    // /api/staff/login, /api/staff/accep
 // Employee Portal routes (staff-authenticated)
 app.use('/api/employee', employeeRoutes);  // /api/employee/profile, /api/employee/schedule, etc.
 
-// 404 handler for API routes
-app.use('/api/*', (req, res) => {
-    res.status(404).json({ error: `Endpoint not found: ${req.originalUrl}` });
-});
-
 // Error handler
 app.use((err, req, res, next) => {
     console.error('Server error:', err);
