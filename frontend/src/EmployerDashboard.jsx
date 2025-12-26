@@ -73,11 +73,14 @@ const statusPillClass = (status) => {
 // SHARED COMPONENTS - Enhanced
 // ============================================
 
-const Card = ({ title, right, children, className = '' }) => (
-    <div className={`bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 p-6 ${className}`}>
+const Card = ({ title, subtitle, right, children, className = '', noPadding = false }) => (
+    <div className={`bg-white rounded-xl border border-slate-200/60 ${noPadding ? '' : 'p-5'} ${className}`}>
         {(title || right) && (
-            <div className="flex items-start justify-between gap-4 mb-4">
-                {title && <div className="font-semibold text-lg text-slate-800">{title}</div>}
+            <div className={`flex items-start justify-between gap-4 ${noPadding ? 'px-5 pt-5' : ''} ${children ? 'mb-4' : ''}`}>
+                <div>
+                    {title && <div className="font-semibold text-slate-900">{title}</div>}
+                    {subtitle && <div className="text-xs text-slate-500 mt-0.5">{subtitle}</div>}
+                </div>
                 {right}
             </div>
         )}
@@ -391,33 +394,39 @@ export default function EmployerDashboard() {
     // ============================================
 
     const TopBar = () => (
-        <div className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-b border-slate-200">
-            <div className="px-4 py-3 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-bold text-sm">H</div>
+        <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-slate-200">
+            <div className="px-6 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">
+                        {org.name?.charAt(0)?.toUpperCase() || 'H'}
+                    </div>
                     <div>
-                        <div className="text-sm font-semibold">{org.name}</div>
-                        <div className="text-xs text-slate-600">
-                            Plan: <span className="font-medium">{org.plan.tier}</span>{' '}
-                            <span className={statusPillClass(org.plan.status)}>{org.plan.status}</span>
+                        <div className="text-sm font-semibold text-slate-900">{org.name}</div>
+                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                            <span className="capitalize">{org.plan.tier}</span>
+                            <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                            <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${org.plan.status === 'active' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+                                }`}>{org.plan.status}</span>
                         </div>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <div className="hidden sm:block text-xs text-slate-600 mr-2">Viewing</div>
-                    <select
-                        className="px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm"
-                        value={currentLoc}
-                        onChange={(e) => setCurrentLoc(e.target.value)}
-                    >
-                        <option value="ALL">All Locations</option>
-                        {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
-                    </select>
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg">
+                        <span className="text-xs text-slate-500">Location:</span>
+                        <select
+                            className="bg-transparent text-sm font-medium text-slate-700 border-0 focus:ring-0 cursor-pointer pr-6"
+                            value={currentLoc}
+                            onChange={(e) => setCurrentLoc(e.target.value)}
+                        >
+                            <option value="ALL">All Locations</option>
+                            {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                        </select>
+                    </div>
 
                     <button
                         onClick={() => { localStorage.removeItem('hure_auth_token'); localStorage.removeItem('hure_clinic_id'); window.location.href = '/'; }}
-                        className="px-3 py-2 rounded-xl border border-slate-300 text-sm hover:bg-slate-50"
+                        className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors"
                     >
                         Logout
                     </button>
@@ -431,33 +440,38 @@ export default function EmployerDashboard() {
     // ============================================
 
     const Sidebar = () => (
-        <div className="bg-gradient-to-b from-slate-900 to-slate-800 px-3 pt-5 pb-3 w-56 min-h-[calc(100vh-53px)] sticky top-0 flex flex-col shrink-0">
+        <div className="bg-slate-900 px-3 pt-6 pb-4 w-56 min-h-[calc(100vh-53px)] sticky top-0 flex flex-col shrink-0">
             {/* User Info */}
-            <div className="mb-3 pb-3 border-b border-slate-700">
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center text-white font-bold text-sm">
+            <div className="mb-5 pb-4 border-b border-slate-700/50">
+                <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-emerald-500/20">
                         {currentUserRole.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                        <div className="text-sm font-semibold text-white">{currentUserRole}</div>
-                        <div className="text-xs text-slate-300">{currentLocName}</div>
+                        <div className="text-sm font-semibold text-white capitalize">{currentUserRole}</div>
+                        <div className="text-xs text-slate-400">{currentLocName}</div>
                     </div>
                 </div>
             </div>
 
             {/* Navigation */}
-            <nav className="space-y-0.5 flex-1">
+            <nav className="space-y-1 flex-1">
+                <div className="text-[10px] uppercase tracking-wider text-slate-500 font-medium px-3 mb-2">Main</div>
                 {has('view_dashboard') && <NavBtn icon="📊" label="Dashboard" active={view === 'dashboard'} onClick={() => setView('dashboard')} />}
                 {has('view_staff') && <NavBtn icon="👥" label="Staff" active={view === 'staff'} onClick={() => setView('staff')} />}
                 {has('view_schedule') && <NavBtn icon="📅" label="Schedule" active={view === 'schedule'} onClick={() => setView('schedule')} />}
                 {has('view_attendance') && <NavBtn icon="⏰" label="Attendance" active={view === 'attendance'} onClick={() => setView('attendance')} />}
+
+                <div className="text-[10px] uppercase tracking-wider text-slate-500 font-medium px-3 mt-4 mb-2">Finance</div>
                 {has('export_payroll') && <NavBtn icon="💰" label="Payroll" active={view === 'payroll'} onClick={() => setView('payroll')} />}
                 {has('view_leave') && <NavBtn icon="🏖️" label="Leave" active={view === 'leave'} onClick={() => setView('leave')} />}
+                {has('view_billing') && <NavBtn icon="💳" label="Billing" active={view === 'billing'} onClick={() => setView('billing')} />}
+
+                <div className="text-[10px] uppercase tracking-wider text-slate-500 font-medium px-3 mt-4 mb-2">Admin</div>
                 {(has('manage_org_verification') || has('manage_facility_verification')) &&
                     <NavBtn icon="✅" label="Verification" active={view === 'verification'} onClick={() => setView('verification')} />}
                 {(has('manage_org_settings') || has('manage_location_settings')) &&
                     <NavBtn icon="⚙️" label="Settings" active={view === 'settings'} onClick={() => setView('settings')} />}
-                {has('view_billing') && <NavBtn icon="💳" label="Billing" active={view === 'billing'} onClick={() => setView('billing')} />}
                 {has('view_docs') && <NavBtn icon="📄" label="Documents" active={view === 'docs'} onClick={() => setView('docs')} />}
                 {has('view_audit') && <NavBtn icon="📝" label="Audit Log" active={view === 'audit'} onClick={() => setView('audit')} />}
             </nav>
@@ -475,43 +489,108 @@ export default function EmployerDashboard() {
         }).length;
 
         const facilityPending = locations.filter(l => l.facility_verification_status !== 'approved').length;
+        const activeStaff = staff.filter(s => s.employment_status === 'active').length;
 
         return (
-            <div className="max-w-7xl mx-auto p-4">
-                <div className="flex items-start justify-between gap-3 mb-4">
-                    <div>
-                        <div className="text-xl font-bold">Dashboard</div>
-                        <div className="text-sm text-slate-600 mt-1">Overview • {currentLocName}</div>
+            <div className="space-y-6">
+                {/* Page Header */}
+                <div>
+                    <h1 className="text-xl font-semibold text-slate-900">Dashboard</h1>
+                    <p className="text-sm text-slate-500 mt-0.5">Overview for {currentLocName}</p>
+                </div>
+
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="bg-white rounded-xl border border-slate-200/60 p-4">
+                        <div className="flex items-center justify-between">
+                            <span className="text-2xl">👥</span>
+                            <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Active</span>
+                        </div>
+                        <div className="mt-3">
+                            <div className="text-2xl font-bold text-slate-900">{activeStaff}</div>
+                            <div className="text-xs text-slate-500 mt-0.5">Active Staff</div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl border border-slate-200/60 p-4">
+                        <div className="flex items-center justify-between">
+                            <span className="text-2xl">📍</span>
+                        </div>
+                        <div className="mt-3">
+                            <div className="text-2xl font-bold text-slate-900">{locations.length}</div>
+                            <div className="text-xs text-slate-500 mt-0.5">Locations</div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl border border-slate-200/60 p-4">
+                        <div className="flex items-center justify-between">
+                            <span className="text-2xl">📅</span>
+                            {openShifts > 0 && <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded">Gaps</span>}
+                        </div>
+                        <div className="mt-3">
+                            <div className="text-2xl font-bold text-slate-900">{openShifts}</div>
+                            <div className="text-xs text-slate-500 mt-0.5">Coverage Gaps</div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl border border-slate-200/60 p-4">
+                        <div className="flex items-center justify-between">
+                            <span className="text-2xl">✅</span>
+                            {facilityPending > 0 && <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded">{facilityPending} pending</span>}
+                        </div>
+                        <div className="mt-3">
+                            <div className="text-2xl font-bold text-slate-900 capitalize">{org.orgVerification.status.replace(/_/g, ' ')}</div>
+                            <div className="text-xs text-slate-500 mt-0.5">Verification</div>
+                        </div>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Card title="Subscription">
-                        <div className="text-sm text-slate-700">Tier: <span className="font-semibold">{org.plan.tier}</span></div>
-                        <div className="text-sm text-slate-700 mt-1">Renewal: <span className="font-medium">{fmtDateEA(org.plan.renewOn)}</span></div>
-                        <div className="text-sm text-slate-700 mt-2">
-                            Limits: <span className="font-medium">{limits.locations} location(s)</span>, <span className="font-medium">{limits.staff} staff</span>
-                        </div>
-                        <div className="mt-2 text-xs text-slate-500">
-                            {locations.length > limits.locations ? '⚠️ Above location limit' : '✓ Within plan limits'}
-                        </div>
-                    </Card>
-
-                    <Card title="Verification status">
-                        <div className="flex items-center justify-between text-sm">
-                            <div className="text-slate-700">Organization</div>
-                            <span className={statusPillClass(org.orgVerification.status)}>{org.orgVerification.status.replace(/_/g, ' ')}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm mt-2">
-                            <div className="text-slate-700">Facilities needing action</div>
-                            <div className="font-semibold">{facilityPending}</div>
+                {/* Info Cards */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <Card title="Subscription" subtitle={`${org.plan.tier} Plan`}>
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                                <span className="text-sm text-slate-600">Renewal Date</span>
+                                <span className="text-sm font-medium text-slate-900">{fmtDateEA(org.plan.renewOn)}</span>
+                            </div>
+                            <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                                <span className="text-sm text-slate-600">Location Limit</span>
+                                <span className="text-sm font-medium text-slate-900">{locations.length} / {limits.locations}</span>
+                            </div>
+                            <div className="flex items-center justify-between py-2">
+                                <span className="text-sm text-slate-600">Staff Limit</span>
+                                <span className="text-sm font-medium text-slate-900">{staff.length} / {limits.staff}</span>
+                            </div>
                         </div>
                     </Card>
 
-                    <Card title="Operational snapshot">
-                        <div className="text-sm text-slate-700">Locations: <span className="font-semibold">{locations.length}</span></div>
-                        <div className="text-sm text-slate-700 mt-1">Staff: <span className="font-semibold">{staff.length}</span></div>
-                        <div className="text-sm text-slate-700 mt-1">Coverage gaps: <span className="font-semibold">{openShifts}</span></div>
+                    <Card title="Quick Actions">
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                onClick={() => setView('staff')}
+                                className="flex items-center gap-2 p-3 rounded-lg bg-slate-50 hover:bg-slate-100 text-sm font-medium text-slate-700 transition-colors"
+                            >
+                                <span>👥</span> Manage Staff
+                            </button>
+                            <button
+                                onClick={() => setView('schedule')}
+                                className="flex items-center gap-2 p-3 rounded-lg bg-slate-50 hover:bg-slate-100 text-sm font-medium text-slate-700 transition-colors"
+                            >
+                                <span>📅</span> View Schedule
+                            </button>
+                            <button
+                                onClick={() => setView('attendance')}
+                                className="flex items-center gap-2 p-3 rounded-lg bg-slate-50 hover:bg-slate-100 text-sm font-medium text-slate-700 transition-colors"
+                            >
+                                <span>⏰</span> Attendance
+                            </button>
+                            <button
+                                onClick={() => setView('payroll')}
+                                className="flex items-center gap-2 p-3 rounded-lg bg-slate-50 hover:bg-slate-100 text-sm font-medium text-slate-700 transition-colors"
+                            >
+                                <span>💰</span> Export Payroll
+                            </button>
+                        </div>
                     </Card>
                 </div>
             </div>
@@ -594,31 +673,31 @@ export default function EmployerDashboard() {
         };
 
         return (
-            <div className="max-w-7xl mx-auto p-4">
-                <div className="flex items-start justify-between gap-3 mb-4">
+            <div className="space-y-6">
+                <div className="flex items-center justify-between">
                     <div>
-                        <div className="text-xl font-bold">Staff</div>
-                        <div className="text-sm text-slate-600 mt-1">Manage staff • {currentLocName}</div>
+                        <h1 className="text-xl font-semibold text-slate-900">Staff</h1>
+                        <p className="text-sm text-slate-500 mt-0.5">Manage your team at {currentLocName}</p>
                     </div>
                     {canManage && (
-                        <button onClick={() => setShowStaffModal(true)} className="px-4 py-2 rounded-xl text-sm font-medium bg-blue-600 text-white hover:bg-blue-700">
-                            Add staff
+                        <button onClick={() => setShowStaffModal(true)} className="px-4 py-2 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm">
+                            + Add Staff
                         </button>
                     )}
                 </div>
 
-                <Card>
+                <Card noPadding>
                     <div className="overflow-auto">
                         <table className="w-full text-sm">
-                            <thead className="bg-slate-50 text-slate-600">
-                                <tr>
-                                    <th className="text-left font-medium p-3">Name</th>
-                                    <th className="text-left font-medium p-3">Email</th>
-                                    <th className="text-left font-medium p-3">Role</th>
-                                    <th className="text-left font-medium p-3">Job Role</th>
-                                    <th className="text-left font-medium p-3">Vetting</th>
-                                    <th className="text-left font-medium p-3">Status</th>
-                                    {canManage && <th className="text-left font-medium p-3">Actions</th>}
+                            <thead>
+                                <tr className="border-b border-slate-200">
+                                    <th className="text-left font-medium text-slate-500 text-xs uppercase tracking-wider p-4">Name</th>
+                                    <th className="text-left font-medium text-slate-500 text-xs uppercase tracking-wider p-4">Email</th>
+                                    <th className="text-left font-medium text-slate-500 text-xs uppercase tracking-wider p-4">Role</th>
+                                    <th className="text-left font-medium text-slate-500 text-xs uppercase tracking-wider p-4">Job Role</th>
+                                    <th className="text-left font-medium text-slate-500 text-xs uppercase tracking-wider p-4">Vetting</th>
+                                    <th className="text-left font-medium text-slate-500 text-xs uppercase tracking-wider p-4">Status</th>
+                                    {canManage && <th className="text-left font-medium text-slate-500 text-xs uppercase tracking-wider p-4">Actions</th>}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
