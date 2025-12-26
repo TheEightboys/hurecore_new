@@ -4,7 +4,11 @@
 
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config({ path: '.env.local' });
+
+// Load .env.local only in development (Vercel provides env vars directly in production)
+if (process.env.NODE_ENV !== 'production') {
+    require('dotenv').config({ path: '.env.local' });
+}
 
 const app = express();
 
