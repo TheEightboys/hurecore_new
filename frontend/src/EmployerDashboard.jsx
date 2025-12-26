@@ -327,14 +327,15 @@ export default function EmployerDashboard() {
         const fetchData = async () => {
             setLoading(true);
             try {
-                const [staffRes, locRes, blocksRes, attRes, leaveRes, orgVerRes, settingsRes] = await Promise.all([
+                const [staffRes, locRes, blocksRes, attRes, leaveRes, orgVerRes, settingsRes, auditRes] = await Promise.all([
                     staffAPI.list(clinicId).catch(() => ({ data: [] })),
                     locationsAPI.list(clinicId).catch(() => ({ data: [] })),
                     scheduleBlocksAPI.list(clinicId).catch(() => ({ data: [] })),
                     attendanceAPI.list(clinicId).catch(() => ({ data: [] })),
                     leaveAPI.list(clinicId).catch(() => ({ data: [] })),
                     verificationAPI.getOrg(clinicId).catch(() => ({ data: null })),
-                    settingsAPI.get(clinicId).catch(() => ({ clinic: null }))
+                    settingsAPI.get(clinicId).catch(() => ({ clinic: null })),
+                    auditAPI.list(clinicId).catch(() => ({ data: [] }))
                 ]);
 
                 setStaff(staffRes.data || []);
@@ -342,6 +343,7 @@ export default function EmployerDashboard() {
                 setScheduleBlocks(blocksRes.data || []);
                 setAttendance(attRes.data || []);
                 setLeaves(leaveRes.data || []);
+                setAudit(auditRes.data || []);
 
                 // Update org with clinic name from settings
                 if (settingsRes.clinic?.name) {
