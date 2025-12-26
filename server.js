@@ -45,6 +45,9 @@ const verificationsRoutes = require('./routes/verifications'); // SuperAdmin ver
 // Employee Portal routes
 const employeeRoutes = require('./routes/employee');
 
+// Document management routes
+const documentsRoutes = require('./routes/documents');
+
 // Health check
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -73,6 +76,7 @@ app.use('/api/employer', scheduleBlocksRoutes);  // /api/employer/:clinicId/sche
 app.use('/api/employer', payrollRoutes);         // /api/employer/:clinicId/payroll
 app.use('/api/employer', verificationRoutes);    // /api/employer/:clinicId/org-verification
 app.use('/api/employer', auditLogsRoutes);       // /api/employer/:clinicId/audit
+app.use('/api/employer', documentsRoutes);       // /api/employer/:clinicId/documents
 
 // SuperAdmin verification review routes
 app.use('/api/verifications', verificationsRoutes);  // /api/verifications/pending, /approve, /reject

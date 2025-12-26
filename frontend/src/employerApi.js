@@ -387,6 +387,55 @@ export const auditAPI = {
     },
 };
 
+// ============================================
+// DOCUMENTS API
+// ============================================
+
+export const documentsAPI = {
+    list: (clinicId, category = null) => {
+        const params = category && category !== 'all' ? `?category=${category}` : '';
+        return fetchAPI(`/employer/${clinicId}/documents${params}`);
+    },
+
+    upload: async (clinicId, file, metadata = {}) => {
+        // Convert file to base64
+        const base64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+
+        return fetchAPI(`/employer/${clinicId}/documents`, {
+            method: 'POST',
+            body: JSON.stringify({
+                name: metadata.name || file.name,
+                fileName: file.name,
+                fileData: base64,
+                fileType: file.type,
+                fileSize: file.size,
+                category: metadata.category || 'other',
+                uploadedBy: metadata.uploadedBy,
+                uploadedByName: metadata.uploadedByName || 'Unknown',
+            }),
+        });
+    },
+
+    get: (clinicId, docId) => {
+        return fetchAPI(`/employer/${clinicId}/documents/${docId}`);
+    },
+
+    getDownloadUrl: (clinicId, docId) => {
+        return fetchAPI(`/employer/${clinicId}/documents/${docId}/download`);
+    },
+
+    delete: (clinicId, docId) => {
+        return fetchAPI(`/employer/${clinicId}/documents/${docId}`, {
+            method: 'DELETE',
+        });
+    },
+};
+
 // Export helper functions
 export { getToken, getClinicId };
 
