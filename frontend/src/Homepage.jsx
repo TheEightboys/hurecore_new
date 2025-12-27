@@ -129,7 +129,7 @@ export default function Homepage() {
                         <span className="block bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">Hure Core</span>
                         <span className="block text-xl sm:text-3xl md:text-4xl mt-4 text-slate-300 font-medium">Multi-Tenant Staff Management</span>
                     </h1>
-                    <p className="animate-hero text-base sm:text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed px-4">
+                    <p className="animate-hero text-base sm:text-xl text-slate-400 mb-8 max-w-2xl mx-auto leading-relaxed px-4">
                         HURE Core streamlines staff management, scheduling, attendance tracking, and compliance for organizations of all sizes.
                     </p>
                     <div className="animate-hero flex flex-col sm:flex-row gap-5 justify-center items-center">
