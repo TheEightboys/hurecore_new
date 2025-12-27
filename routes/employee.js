@@ -553,7 +553,7 @@ router.get('/documents', requireStaff, async (req, res) => {
 
         if (docIds.length > 0) {
             const { data: acks } = await supabaseAdmin
-                .from('document_acknowledgments')
+                .from('clinic_document_acknowledgments')
                 .select('document_id, acknowledged_at')
                 .eq('staff_id', req.user.staffId)
                 .in('document_id', docIds);
@@ -620,7 +620,7 @@ router.post('/documents/:docId/acknowledge', requireStaff, async (req, res) => {
 
         // Check if already acknowledged
         const { data: existing } = await supabaseAdmin
-            .from('document_acknowledgments')
+            .from('clinic_document_acknowledgments')
             .select('*')
             .eq('document_id', docId)
             .eq('staff_id', req.user.staffId)
@@ -632,7 +632,7 @@ router.post('/documents/:docId/acknowledge', requireStaff, async (req, res) => {
 
         // Create acknowledgment
         const { data, error } = await supabaseAdmin
-            .from('document_acknowledgments')
+            .from('clinic_document_acknowledgments')
             .insert({
                 document_id: docId,
                 staff_id: req.user.staffId,
